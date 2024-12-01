@@ -43,13 +43,9 @@ public class Vector3D
         if(!calculatedNormalized)
         {
             float magnitude = Magnitude();
-            if(magnitude == 0f)
+            if(magnitude == 0f || Float.isNaN(magnitude))
             {
                 normalized = Vector3D.Zero;
-            }
-            else if(magnitude == Float.POSITIVE_INFINITY || Float.isNaN(magnitude))
-            {
-                normalized = null;
             }
             else
             {
