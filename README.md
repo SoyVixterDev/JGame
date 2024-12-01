@@ -49,7 +49,7 @@ A JComponent is an abstract class that represents a piece of code that will be e
 
 
 ## Execution Order
-This section describes de execution order for different sections of objects and engine processes, divided in different moments. Some parts are executed instantaneously after Creating the object, others are called during the engine's update loop.
+This section describes the execution order for different sections of objects and engine processes, divided in different moments. Some parts are executed instantaneously after Creating the object, others are called during the engine's update loop.
 
 The section that runs in engine loop ensures that every object gets the callback before advancing to the next callback, for example, before calling Update for any object Physics Update will be called for all objects.
 The other sections do not guarantee the same behavior, as they are called right after their specified conditions, meaning that the order depends on the specific execution of your code.
