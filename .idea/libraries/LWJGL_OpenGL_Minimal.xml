@@ -1,0 +1,27 @@
+<component name="libraryTable">
+  <library name="LWJGL-OpenGL Minimal">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-assimp-natives-windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-assimp.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-glfw-natives-windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-glfw.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-natives-windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-openal-natives-windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-openal.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-opengl-natives-windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-opengl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-stb-natives-windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-stb.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-assimp-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-glfw-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-openal-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-opengl-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LWJGL - Minimal OpenGL/lwjgl-stb-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
