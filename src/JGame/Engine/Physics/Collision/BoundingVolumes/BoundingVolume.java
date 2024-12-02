@@ -1,6 +1,5 @@
 package JGame.Engine.Physics.Collision.BoundingVolumes;
 
-import JGame.Engine.Basic.Transform;
 import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Vector3D;
 
@@ -9,6 +8,8 @@ import java.util.List;
 
 public abstract class BoundingVolume
 {
+    protected Vector3D center;
+
     public enum BoundingType
     {
         Box,
@@ -201,6 +202,7 @@ public abstract class BoundingVolume
 
     protected abstract boolean Overlaps(BoundingBox box);
     protected abstract boolean Overlaps(BoundingSphere sphere);
-    public abstract float GetSize();
+    public abstract float GetVolume();
     public abstract float GetGrowth(BoundingVolume volume);
+    public Vector3D GetCenter() { return center; }
 }

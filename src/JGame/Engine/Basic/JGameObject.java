@@ -31,6 +31,9 @@ public class JGameObject extends BaseEngineClass
     @Override
     public final void Destroy()
     {
+        if(transform == null)
+            return;
+
         for(Transform child : transform.GetChildren())
         {
             child.object().Destroy();
@@ -275,7 +278,7 @@ public class JGameObject extends BaseEngineClass
      */
     public static void Terminate()
     {
-        for(JGameObject object : allObjects)
+        for(JGameObject object : new ArrayList<>(allObjects))
             object.Destroy();
     }
 

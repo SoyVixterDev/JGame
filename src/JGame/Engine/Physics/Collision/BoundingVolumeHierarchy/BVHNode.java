@@ -90,7 +90,7 @@ public class BVHNode
             return potentialContacts;
         }
 
-        if(other.IsLeaf() || (!IsLeaf()) && volume.GetSize() >= other.volume.GetSize())
+        if(other.IsLeaf() || (!IsLeaf()) && volume.GetVolume() >= other.volume.GetVolume())
         {
             int count = children[0].GetPotentialContactsWith(other, potentialContacts, limit).size();
 

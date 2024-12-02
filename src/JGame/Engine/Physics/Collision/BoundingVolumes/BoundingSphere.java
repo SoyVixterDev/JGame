@@ -8,8 +8,12 @@ import JGame.Engine.Structures.Vector3D;
  */
 public class BoundingSphere extends BoundingVolume
 {
-    Vector3D center;
     float radius;
+
+    public float GetRadius()
+    {
+        return radius;
+    }
 
     public BoundingSphere(Vector3D center, float radius)
     {
@@ -39,7 +43,7 @@ public class BoundingSphere extends BoundingVolume
     }
 
     @Override
-    public float GetSize()
+    public float GetVolume()
     {
         return (float) (4 * Math.PI / 3) * radius * radius * radius;
     }

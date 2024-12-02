@@ -42,7 +42,7 @@ public class Physics
             InternalGameInstance.Instance._internalPhysicsUpdate();
 
             // Run physics update on all objects
-            for(BaseEngineClass baseObj : BaseEngineClass.allBaseObjects)
+            for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
             {
                 if(baseObj != null && baseObj.IsAvailable())
                 {
@@ -59,13 +59,12 @@ public class Physics
      */
     private static void UpdateForces()
     {
-        ArrayList<ForceRegistration> unusedRegistrations = new ArrayList<>();
-        for(ForceRegistration reg : forceRegistrations)
+        for(ForceRegistration reg : new ArrayList<>(forceRegistrations))
         {
             //If either the registration itself, the generator or rigidbody are null, then delete the registration
             if(reg == null || reg.Generator() == null || reg.Rigidbody() == null)
             {
-                unusedRegistrations.add(reg);
+                UnregisterForce(reg);
                 continue;
             }
 
@@ -74,23 +73,7 @@ public class Physics
                 reg.Generator().UpdateForce(reg.Rigidbody());
             }
         }
-
-        ClearUnusedRegistrations(unusedRegistrations);
     }
-
-    /**
-     * Removes unused or invalid registrations from the list
-     * @param unusedRegistrations
-     * The list of the unused or invalid registrations
-     */
-    private static void ClearUnusedRegistrations(ArrayList<ForceRegistration> unusedRegistrations)
-    {
-        for (ForceRegistration reg : unusedRegistrations)
-        {
-            UnregisterForce(reg);
-        }
-    }
-
     /**
      * Registers a Force - Object pair
      * @param forceGenerator

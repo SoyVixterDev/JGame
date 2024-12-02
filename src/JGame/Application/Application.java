@@ -11,6 +11,8 @@ import JGame.Engine.Settings;
 import Project.JGameInstance;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+
 /**
  * The class used internally by the engine to start the game application, handles the main application loop.
  */
@@ -81,7 +83,7 @@ public class Application
     {
         InternalGameInstance.Instance._internalEarlyUpdate();
 
-        for(BaseEngineClass baseObj : BaseEngineClass.allBaseObjects)
+        for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
             {
@@ -99,7 +101,8 @@ public class Application
         Physics.UpdatePhysics();
 
         InternalGameInstance.Instance._internalUpdate();
-        for(BaseEngineClass baseObj : BaseEngineClass.allBaseObjects)
+
+        for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
             {
@@ -115,7 +118,7 @@ public class Application
     private void LateUpdate()
     {
         InternalGameInstance.Instance._internalLateUpdate();
-        for(BaseEngineClass baseObj : BaseEngineClass.allBaseObjects)
+        for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
             {

@@ -8,8 +8,12 @@ import JGame.Engine.Structures.Vector3D;
  */
 public class BoundingBox extends BoundingVolume
 {
-    Vector3D center;
     Vector3D halfSize;
+
+    public Vector3D GetHalfSize()
+    {
+        return halfSize;
+    }
 
     public BoundingBox(Vector3D center, Vector3D halfSize)
     {
@@ -45,7 +49,7 @@ public class BoundingBox extends BoundingVolume
     }
 
     @Override
-    public float GetSize()
+    public float GetVolume()
     {
         return (halfSize.x * 2) * (halfSize.y * 2) * (halfSize.z * 2);
     }
@@ -75,7 +79,7 @@ public class BoundingBox extends BoundingVolume
             return 0;
         }
 
-        float originalSize = GetSize();
+        float originalSize = GetVolume();
         Vector3D expandedHalfSize = max.Subtract(min).Scale(0.5f);
         float expandedSize = (expandedHalfSize.x * 2) * (expandedHalfSize.y * 2) * (expandedHalfSize.z * 2);
 
