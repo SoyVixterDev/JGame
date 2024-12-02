@@ -1,5 +1,8 @@
 # JGame Engine
 
+## Information
+JGame is a simple Java 3D Game Engine in development by me (SoyVixterDev) as a solo project started for a University Project, it can handle basic 3D Rendering and Lighting, as well as a work-in-progress Physics Engine. Anyone is free to use this engine or create new versions based on the codebase, but be aware that this isn't a very professional project. More information about the functionality of JGame can be read below.
+
 ## Quick Setup
 To begin creating in JGame start by adding your code to the GameInstance class in the Project Package. There should only be one Game Instance script, and it will work as your Main script where you can start adding objects into the world.
 
