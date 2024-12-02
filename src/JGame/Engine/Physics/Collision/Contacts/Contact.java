@@ -38,7 +38,7 @@ public class Contact
         rigidbodies[0] = A;
         rigidbodies[1] = B;
 
-        contactNormal = Vector3D.Subtract(B.Transform().GetGlobalPosition(), A.Transform().GetGlobalPosition()).Normalized();
+        contactNormal = Vector3D.Subtract(B.transform().GetGlobalPosition(), A.transform().GetGlobalPosition()).Normalized();
 
         switch (resolution)
         {
@@ -95,15 +95,15 @@ public class Contact
 
         Vector3D movementPerIMass = contactNormal.Scale(-penetration/totalInverseMass);
 
-        rigidbodies[0].Transform().SetGlobalPosition
+        rigidbodies[0].transform().SetGlobalPosition
                 (
-                        rigidbodies[0].Transform().GetGlobalPosition().Add(movementPerIMass.Scale(rigidbodies[0].GetInverseMass()))
+                        rigidbodies[0].transform().GetGlobalPosition().Add(movementPerIMass.Scale(rigidbodies[0].GetInverseMass()))
                 );
 
         if(rigidbodies[1] != null)
-            rigidbodies[1].Transform().SetGlobalPosition
+            rigidbodies[1].transform().SetGlobalPosition
                     (
-                            rigidbodies[1].Transform().GetGlobalPosition().Subtract(movementPerIMass.Scale(rigidbodies[0].GetInverseMass()))
+                            rigidbodies[1].transform().GetGlobalPosition().Subtract(movementPerIMass.Scale(rigidbodies[0].GetInverseMass()))
                     );
     }
 

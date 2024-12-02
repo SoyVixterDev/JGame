@@ -1,6 +1,5 @@
 package JGame.Engine.Graphics.Lighting;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Renderers.MeshRenderer;
 import JGame.Engine.Graphics.Renderers.Renderer;
@@ -11,8 +10,6 @@ import JGame.Engine.Settings;
 import JGame.Engine.Structures.Matrix4x4;
 import JGame.Engine.Structures.Vector3D;
 import JGame.Engine.Utilities.CameraMatrixUtilities;
-
-import javax.naming.InitialContext;
 
 public class PointLight extends Light
 {
@@ -26,7 +23,7 @@ public class PointLight extends Light
     public float falloff = 1.25f;
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         super.Initialize();
         //Change the override shader to use the shadow cubemap shader
@@ -66,7 +63,7 @@ public class PointLight extends Light
                         MeshRenderer.BackfaceCullingOverride.OVERRIDE_CULL,
                         lightProjections,
                         lightProjectionMatrix,
-                        Transform().GetGlobalPosition()
+                        transform().GetGlobalPosition()
                 );
             }
         }
@@ -78,7 +75,7 @@ public class PointLight extends Light
         super.UpdateLightValues(shader, index);
         String lightIndex = "lights[" + index + "]";
 
-        shader.SetUniformProperty(lightIndex + ".position", Transform().GetGlobalPosition(), true);
+        shader.SetUniformProperty(lightIndex + ".position", transform().GetGlobalPosition(), true);
         shader.SetUniformProperty(lightIndex + ".range", range, true);
         shader.SetUniformProperty(lightIndex + ".falloff", falloff, true);
         shader.SetUniformProperty(lightIndex + ".type", LIGHT_TYPE_POINT, true);
@@ -95,12 +92,12 @@ public class PointLight extends Light
     {
         return new Matrix4x4[]
         {
-                CameraMatrixUtilities.LookAt(Transform().GetGlobalPosition(), Vector3D.Right, Vector3D.Down),
-                CameraMatrixUtilities.LookAt(Transform().GetGlobalPosition(), Vector3D.Left, Vector3D.Down),
-                CameraMatrixUtilities.LookAt(Transform().GetGlobalPosition(), Vector3D.Up, Vector3D.Backward),
-                CameraMatrixUtilities.LookAt(Transform().GetGlobalPosition(), Vector3D.Down, Vector3D.Backward),
-                CameraMatrixUtilities.LookAt(Transform().GetGlobalPosition(), Vector3D.Forward, Vector3D.Down),
-                CameraMatrixUtilities.LookAt(Transform().GetGlobalPosition(), Vector3D.Backward, Vector3D.Down),
+                CameraMatrixUtilities.LookAt(transform().GetGlobalPosition(), Vector3D.Right, Vector3D.Down),
+                CameraMatrixUtilities.LookAt(transform().GetGlobalPosition(), Vector3D.Left, Vector3D.Down),
+                CameraMatrixUtilities.LookAt(transform().GetGlobalPosition(), Vector3D.Up, Vector3D.Backward),
+                CameraMatrixUtilities.LookAt(transform().GetGlobalPosition(), Vector3D.Down, Vector3D.Backward),
+                CameraMatrixUtilities.LookAt(transform().GetGlobalPosition(), Vector3D.Forward, Vector3D.Down),
+                CameraMatrixUtilities.LookAt(transform().GetGlobalPosition(), Vector3D.Backward, Vector3D.Down),
         };
     }
 
@@ -112,7 +109,7 @@ public class PointLight extends Light
 
     public boolean IsInRange(Vector3D targetPos)
     {
-        return Vector3D.DistanceSquared(targetPos, Transform().GetGlobalPosition()) <= (range * 25f) * (range * 25f);
+        return Vector3D.DistanceSquared(targetPos, transform().GetGlobalPosition()) <= (range * 25f) * (range * 25f);
     }
 
 

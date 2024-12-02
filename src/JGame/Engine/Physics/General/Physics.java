@@ -2,6 +2,7 @@ package JGame.Engine.Physics.General;
 
 import JGame.Engine.Basic.BaseEngineClass;
 import JGame.Engine.Internal.InternalGameInstance;
+import JGame.Engine.Internal.Logger;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Physics.Interfaces.IForceGenerator;
 import JGame.Engine.Physics.Bodies.Rigidbody;
@@ -28,6 +29,9 @@ public class Physics
     public static void UpdatePhysics()
     {
         physicsTimer += Time.DeltaTime();
+
+        //Limit the physics timer to at most perform 6 updates per frame (loss of precision when under 10fps)
+        physicsTimer = Math.min(physicsTimer, Settings.Physics.physicsUpdateInterval * 6);
 
         while (physicsTimer >= Settings.Physics.physicsUpdateInterval)
         {

@@ -1,6 +1,5 @@
 package JGame.Engine.Physics.Constraints;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Physics.Collision.Contacts.Contact;
 
 /**
@@ -33,7 +32,7 @@ public class CableConstraint extends LinkConstraint
         contacts[0].rigidbodies[0] = rigidbodies[0];
         contacts[0].rigidbodies[1] = rigidbodies[1];
 
-        contacts[0].contactNormal = rigidbodies[1].Transform().GetGlobalPosition().Subtract(rigidbodies[0].Transform().GetGlobalPosition()).Normalized();
+        contacts[0].contactNormal = rigidbodies[1].transform().GetGlobalPosition().Subtract(rigidbodies[0].transform().GetGlobalPosition()).Normalized();
         contacts[0].penetration = length - maxLength;
         contacts[0].restitution = restitution;
 

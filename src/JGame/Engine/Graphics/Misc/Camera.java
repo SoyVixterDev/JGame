@@ -9,8 +9,6 @@ import JGame.Engine.Graphics.Renderers.SkyboxRenderer;
 import JGame.Engine.Structures.Matrix4x4;
 import JGame.Engine.Utilities.CameraMatrixUtilities;
 
-import javax.naming.InitialContext;
-
 /**
  * The Camera component, needed for having graphical output to the window, there should only be one main camera at any point
  */
@@ -106,34 +104,33 @@ public class Camera extends JComponent
     private static Matrix4x4 mainProjectionMatrix = Matrix4x4.Identity();
 
 
-    private Event updateViewMatrix;
+    private final Event updateViewMatrix = new Event()
+    {
+        @Override
+        protected void OnInvoke()
+        {
+            CalculateViewMatrix();
+        }
+    };
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
-        updateViewMatrix = new Event()
-        {
-            @Override
-            protected void OnInvoke()
-            {
-                CalculateViewMatrix();
-            }
-        };
         Main = this;
     }
 
     @Override
     protected void OnEnable()
     {
-        Object().Transform().OnChangePosition.Subscribe(updateViewMatrix);
-        Object().Transform().OnChangeRotation.Subscribe(updateViewMatrix);
+        object().transform().OnChangePosition.Subscribe(updateViewMatrix);
+        object().transform().OnChangeRotation.Subscribe(updateViewMatrix);
     }
 
     @Override
     protected void OnDisable()
     {
-        Object().Transform().OnChangePosition.Unsubscribe(updateViewMatrix);
-        Object().Transform().OnChangeRotation.Unsubscribe(updateViewMatrix);
+        object().transform().OnChangePosition.Unsubscribe(updateViewMatrix);
+        object().transform().OnChangeRotation.Unsubscribe(updateViewMatrix);
     }
 
 
@@ -175,7 +172,7 @@ public class Camera extends JComponent
         if(Main == null)
             return;
 
-        mainViewMatrix = CameraMatrixUtilities.LookAt(Main.Transform().GetGlobalPosition(), Main.Transform().Forward(), Main.Transform().Up());
+        mainViewMatrix = CameraMatrixUtilities.LookAt(Main.transform().GetGlobalPosition(), Main.transform().Forward(), Main.transform().Up());
     }
 
     /**

@@ -7,7 +7,6 @@ import JGame.Engine.Graphics.Lighting.Light;
 import JGame.Engine.Graphics.Lighting.PointLight;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Renderers.MeshRenderer;
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Vector3D;
 import org.lwjgl.opengl.GL46;
 
@@ -34,7 +33,7 @@ public interface ILightHandler
      */
     default boolean TryAddToCurrentLights(Light light)
     {
-        Vector3D currentPos = ((JComponent) this).Transform().GetGlobalPosition();
+        Vector3D currentPos = ((JComponent) this).transform().GetGlobalPosition();
 
         //Not even attempt to load the light if it's too far
         if(light instanceof PointLight pointLight)
@@ -67,7 +66,7 @@ public interface ILightHandler
             //Only take into account the distance if the light isn't directional or ambient, as they are omnipresent and should always have priority
             if(!(GetLights()[i] instanceof DirectionalLight || GetLights()[i] instanceof AmbientLight))
             {
-                dist = Vector3D.DistanceSquared(GetLights()[i].Transform().GetGlobalPosition(), currentPos);
+                dist = Vector3D.DistanceSquared(GetLights()[i].transform().GetGlobalPosition(), currentPos);
             }
 
             if (fartherDist < dist)
@@ -82,7 +81,7 @@ public interface ILightHandler
         //Only take into account the distance if the light isn't directional or ambient, as they are omnipresent and should always have priority
         if(!(light instanceof DirectionalLight || light instanceof AmbientLight))
         {
-           newLightDist = Vector3D.DistanceSquared(light.Transform().GetGlobalPosition(), currentPos);
+           newLightDist = Vector3D.DistanceSquared(light.transform().GetGlobalPosition(), currentPos);
         }
         if (newLightDist >= fartherDist)
         {
@@ -100,7 +99,7 @@ public interface ILightHandler
      */
     private void RemoveFarawayLights()
     {
-        Vector3D currentPos = ((JComponent) this).Transform().GetGlobalPosition();
+        Vector3D currentPos = ((JComponent) this).transform().GetGlobalPosition();
 
         for(int i = 0; i < MAX_LIGHTS; i++)
         {

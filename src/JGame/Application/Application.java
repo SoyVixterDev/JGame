@@ -30,7 +30,7 @@ public class Application
      */
     void RunApplication()
     {
-        JGameInstance._internalInitialize();
+        JGameInstance.Instance._internalInitialize();
 
         Input.Init();
         Time.Initialize();

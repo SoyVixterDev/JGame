@@ -11,7 +11,7 @@ public class AmbientLight extends Light
 
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         super.Initialize();
         emitShadows = false;

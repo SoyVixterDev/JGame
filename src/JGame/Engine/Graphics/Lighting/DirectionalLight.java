@@ -1,14 +1,10 @@
 package JGame.Engine.Graphics.Lighting;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Textures.ShadowMap;
 import JGame.Engine.Settings;
 import JGame.Engine.Structures.Matrix4x4;
-import JGame.Engine.Structures.Vector3D;
 import JGame.Engine.Utilities.CameraMatrixUtilities;
-
-import static org.lwjgl.opengl.GL46.*;
 
 
 public class DirectionalLight extends Light
@@ -27,14 +23,14 @@ public class DirectionalLight extends Light
 
         String lightIndex = "lights[" + index + "]";
 
-        shader.SetUniformProperty(lightIndex + ".forward", Transform().Forward(), true);
+        shader.SetUniformProperty(lightIndex + ".forward", transform().Forward(), true);
         shader.SetUniformProperty(lightIndex + ".type", LIGHT_TYPE_DIRECTIONAL, true);
     }
 
     @Override
     protected Matrix4x4[] CalculateViewMatrices()
     {
-        return new Matrix4x4[]{CameraMatrixUtilities.LookAt(Transform().Backward().Scale(20f), Transform().Forward(), Transform().Up())};
+        return new Matrix4x4[]{CameraMatrixUtilities.LookAt(transform().Backward().Scale(20f), transform().Forward(), transform().Up())};
     }
 
     @Override

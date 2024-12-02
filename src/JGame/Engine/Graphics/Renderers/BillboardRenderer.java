@@ -1,14 +1,11 @@
 package JGame.Engine.Graphics.Renderers;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Camera;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Models.Mesh;
 import JGame.Engine.Graphics.Textures.BaseTexture;
 import JGame.Engine.Graphics.Textures.Texture;
 import JGame.Engine.Structures.Matrix4x4;
-
-import javax.naming.InitialContext;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -27,7 +24,7 @@ public class BillboardRenderer extends Renderer
     );
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         super.Initialize();
         opaque = false;
@@ -39,7 +36,7 @@ public class BillboardRenderer extends Renderer
         shader.Bind();
 
         Matrix4x4 ST_Mat = new Matrix4x4(Matrix4x4.Identity());
-        Matrix4x4 T_Mat = Object().Transform().GetTransformationMatrix();
+        Matrix4x4 T_Mat = object().transform().GetTransformationMatrix();
 
         ST_Mat.values[3] = T_Mat.values[3];
         ST_Mat.values[7] = T_Mat.values[7];

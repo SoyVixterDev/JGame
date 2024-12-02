@@ -1,8 +1,6 @@
 package JGame.Engine.Basic;
 
 import JGame.Engine.Internal.Logger;
-import JGame.Engine.Physics.General.Physics;
-import Project.JGameInstance;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -27,7 +25,7 @@ public abstract class BaseEngineClass
 
             T instance = baseConstructor.newInstance();
 
-            instance.Initialize();
+            instance._internalInitialize();
             instance.OnEnable();
 
             return instance;
@@ -63,6 +61,14 @@ public abstract class BaseEngineClass
     protected BaseEngineClass()
     {
         allBaseObjects.add(this);
+    }
+
+    /**
+     * Internal call for initialization of the object
+     */
+    public final void _internalInitialize()
+    {
+        Initialize();
     }
 
     /**
@@ -104,7 +110,7 @@ public abstract class BaseEngineClass
     /**
      * Called right after the object is being created
      */
-    public void Initialize() { }
+    protected void Initialize() { }
 
     /**
      * Called before the first update
@@ -202,9 +208,9 @@ public abstract class BaseEngineClass
             {
                 ((BaseEngineClass)comp).UpdateAvailability();
             }
-            for(Transform child : object.Transform().GetChildren())
+            for(Transform child : object.transform().GetChildren())
             {
-                ((BaseEngineClass)child.Object()).UpdateAvailability();
+                ((BaseEngineClass)child.object()).UpdateAvailability();
             }
         }
     }

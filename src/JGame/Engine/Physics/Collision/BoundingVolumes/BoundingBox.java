@@ -1,10 +1,7 @@
 package JGame.Engine.Physics.Collision.BoundingVolumes;
 
-import JGame.Engine.Basic.Transform;
 import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Vector3D;
-
-import java.util.Vector;
 
 /**
  * Represents a bounding box, used to specify the boundaries of a collider

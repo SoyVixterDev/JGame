@@ -78,7 +78,7 @@ public class SkyboxRenderer extends Renderer implements IMeshOpenGLHandler
     final int[] buffers = new int[2];
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         super.Initialize();
         skyboxMaterial = new Material(skyboxMaterial);

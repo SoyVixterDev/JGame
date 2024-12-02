@@ -1,7 +1,6 @@
 package JGame.Engine.Physics.Constraints;
 
 import JGame.Engine.Basic.JComponent;
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.Contacts.Contact;
 import JGame.Engine.Structures.Vector3D;
@@ -24,7 +23,7 @@ public abstract class LinkConstraint extends JComponent
      */
     protected final float CurrentLength()
     {
-        return Vector3D.Distance(rigidbodies[0].Transform().GetGlobalPosition(), rigidbodies[1].Transform().GetGlobalPosition());
+        return Vector3D.Distance(rigidbodies[0].transform().GetGlobalPosition(), rigidbodies[1].transform().GetGlobalPosition());
     }
 
     /**

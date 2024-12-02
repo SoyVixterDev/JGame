@@ -1,14 +1,10 @@
 package JGame.Engine.Basic;
 
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 
 /**
  * JGameObject that can be instantiated in the world, you can add your own JComponents,
@@ -37,7 +33,7 @@ public class JGameObject extends BaseEngineClass
     {
         for(Transform child : transform.GetChildren())
         {
-            child.Object().Destroy();
+            child.object().Destroy();
         }
 
         JComponent[] comps = new JComponent[JComponents.size()];
@@ -145,10 +141,10 @@ public class JGameObject extends BaseEngineClass
         JGameObject newObject = new JGameObject();
         allObjects.add(newObject);
 
-        newObject.Transform().SetGlobalPosition(position);
-        newObject.Transform().SetGlobalRotation(rotation);
-        newObject.Transform().SetGlobalScale(scale);
-        newObject.Transform().SetParent(parent);
+        newObject.transform().SetGlobalPosition(position);
+        newObject.transform().SetGlobalRotation(rotation);
+        newObject.transform().SetGlobalScale(scale);
+        newObject.transform().SetParent(parent);
 
         for(Class<? extends JComponent> _class : components)
         {
@@ -195,7 +191,7 @@ public class JGameObject extends BaseEngineClass
 
     //------ Getter Functions ------
 
-    public Transform Transform()
+    public Transform transform()
     {
         return transform;
     }
@@ -227,7 +223,7 @@ public class JGameObject extends BaseEngineClass
         Transform current = transform;
         do
         {
-            C comp = current.Object().GetComponent(type);
+            C comp = current.object().GetComponent(type);
 
             if(comp != null)
                 return comp;
@@ -266,7 +262,7 @@ public class JGameObject extends BaseEngineClass
         ArrayList<C> allcomps = new ArrayList<>();
         do
         {
-            ArrayList<C> comps = current.Object().GetComponents(type);
+            ArrayList<C> comps = current.object().GetComponents(type);
             allcomps.addAll(comps);
 
             current = transform.GetParent();

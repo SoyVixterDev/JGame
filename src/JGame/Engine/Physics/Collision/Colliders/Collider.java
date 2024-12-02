@@ -1,12 +1,16 @@
 package JGame.Engine.Physics.Collision.Colliders;
 
+import JGame.Application.Application;
+import JGame.Application.Window;
 import JGame.Engine.Basic.JComponent;
-import JGame.Engine.Basic.JGameObject;
+import JGame.Engine.EventSystem.Event1P;
+import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
 import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Settings;
+import JGame.Engine.Structures.ColorRGBA;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,23 +18,46 @@ import java.util.List;
  */
 public abstract class Collider extends JComponent
 {
-    private Rigidbody rigidbody;
+    protected Rigidbody rigidbody;
+    protected WireshapeRenderer colliderRenderer;
+
+    private final Event1P<Boolean> OnDebugView = new Event1P<>()
+    {
+        @Override
+        protected void OnInvoke(Boolean param)
+        {
+            colliderRenderer.SetActive(param);
+        }
+    };
 
     @Override
-    protected void Start()
+    protected final void Initialize()
     {
-        rigidbody = Object().GetComponentInParent(Rigidbody.class);
+        rigidbody = object().GetComponentInParent(Rigidbody.class);
+
+        colliderRenderer = CreateWireframe();
+        colliderRenderer.SetColor(ColorRGBA.Green);
+
+        colliderRenderer.SetActive(Settings.Engine.GetDebugView());
+
+        Settings.Engine.changeDebugViewEvent.Subscribe(OnDebugView);
     }
 
     @Override
-    protected void OnEnable()
+    protected void OnDestroy()
+    {
+        Settings.Engine.changeDebugViewEvent.Unsubscribe(OnDebugView);
+    }
+
+    @Override
+    protected final void OnEnable()
     {
         if(rigidbody != null)
             rigidbody.AddCollider(this);
     }
 
     @Override
-    protected void OnDisable()
+    protected final void OnDisable()
     {
         if(rigidbody != null)
             rigidbody.RemoveCollider(this);
@@ -45,13 +72,34 @@ public abstract class Collider extends JComponent
      */
     public final List<Contact> GetContacts(Collider other)
     {
-        return new ArrayList<>();
+        if(other instanceof BoxCollider boxCollider)
+        {
+            return GetContacts(boxCollider);
+        }
+        else if(other instanceof SphereCollider sphereCollider)
+        {
+            return GetContacts(sphereCollider);
+        }
+        else
+        {
+            throw new IllegalArgumentException("Invalid Collider type!, add the collider to the GetContacts function in the Collider base class! Type: " + other.getClass().getName());
+        }
     }
 
+
+    /**
+     * Should add a wireshape renderer of the matching shape to the object and return it
+     * @return
+     * The wireshape renderer
+     */
+    protected abstract WireshapeRenderer CreateWireframe();
     /**
      * Gets the bounding volume that encapsulates this collider
      * @return
      * The bounding volume that encapsulates this collider
      */
     public abstract BoundingVolume GetBoundingVolume();
+
+    public abstract List<Contact> GetContacts(BoxCollider boxCollider);
+    public abstract List<Contact> GetContacts(SphereCollider sphereCollider);
 }

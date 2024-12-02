@@ -1,7 +1,6 @@
 package JGame.Engine.Graphics.Renderers;
 
 import JGame.Engine.Basic.JComponent;
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Camera;
 import JGame.Engine.Structures.Vector3D;
 
@@ -20,7 +19,7 @@ public abstract class Renderer extends JComponent
     public boolean opaque = true;
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         allRenderers.add(this);
     }
@@ -37,7 +36,7 @@ public abstract class Renderer extends JComponent
 
     protected float GetDistanceSquaredFromCamera()
     {
-        return Vector3D.DistanceSquared(Transform().GetGlobalPosition(), Camera.Main.Transform().GetGlobalPosition());
+        return Vector3D.DistanceSquared(transform().GetGlobalPosition(), Camera.Main.transform().GetGlobalPosition());
     }
 
     /**

@@ -35,6 +35,7 @@ public class BVHManager
     public void Insert(Rigidbody body)
     {
         BoundingVolume volume = body.GetBoundingVolume();
+        if(volume == null) return;
 
         if (root == null)
         {
@@ -53,7 +54,8 @@ public class BVHManager
      */
     public void Remove(Rigidbody body)
     {
-        FindNode(body).RemoveNode();
+        BVHNode node = FindNode(body);
+        if(node != null) node.RemoveNode();
     }
     /**
      * Finds a node along the tree based on a rigidbody
@@ -79,6 +81,7 @@ public class BVHManager
     private BVHNode FindNode(Rigidbody body, BVHNode node)
     {
         if(node == null) return null;
+        if(node.children == null) return null;
         if(node.body == body) return node;
         if(node.IsLeaf()) return null;
 

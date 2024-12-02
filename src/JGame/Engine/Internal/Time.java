@@ -52,7 +52,7 @@ public class Time
     {
         double currentTime = Current();
 
-        physicsDeltaTime = Math.max(currentTime - lastPhysicsUpdateTime, Double.MIN_VALUE);
+        physicsDeltaTime = Math.max(currentTime - lastPhysicsUpdateTime, 0);
 
         lastPhysicsUpdateTime = currentTime;
     }

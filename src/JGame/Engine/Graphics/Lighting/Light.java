@@ -2,7 +2,6 @@ package JGame.Engine.Graphics.Lighting;
 
 import JGame.Application.Window;
 import JGame.Engine.Basic.JComponent;
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Renderers.MeshRenderer;
 import JGame.Engine.Graphics.Renderers.Renderer;
@@ -31,7 +30,7 @@ public abstract class Light extends JComponent
     public float maxShadowBias = 0.0025f;
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         InitializeShadowmap();
         UpdatePerspectiveMatrix();
@@ -156,7 +155,7 @@ public abstract class Light extends JComponent
                         MeshRenderer.BackfaceCullingOverride.OVERRIDE_CULL,
                         lightViewMatrices,
                         lightProjectionMatrix,
-                        Transform().GetGlobalPosition()
+                        transform().GetGlobalPosition()
                 );
             }
         }

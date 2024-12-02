@@ -1,7 +1,6 @@
 package Project.Scripts;
 
 import JGame.Engine.Basic.JComponent;
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Graphics.Misc.Camera;
 import JGame.Engine.Structures.Quaternion;
@@ -21,52 +20,52 @@ public class DroneController extends JComponent
 
         if(Input.GetKeyHold(GLFW.GLFW_KEY_W))
         {
-            Camera.Main.Transform().SetGlobalPosition(Vector3D.Add(Camera.Main.Transform().GetGlobalPosition(), Camera.Main.Transform().Forward().Scale((float) Time.DeltaTime() * MOVEMENT_SPEED)));
+            Camera.Main.transform().SetGlobalPosition(Vector3D.Add(Camera.Main.transform().GetGlobalPosition(), Camera.Main.transform().Forward().Scale((float) Time.DeltaTime() * MOVEMENT_SPEED)));
         }
         if(Input.GetKeyHold(GLFW.GLFW_KEY_S))
         {
-            Camera.Main.Transform().SetGlobalPosition(Vector3D.Add(Camera.Main.Transform().GetGlobalPosition(), Camera.Main.Transform().Backward().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
+            Camera.Main.transform().SetGlobalPosition(Vector3D.Add(Camera.Main.transform().GetGlobalPosition(), Camera.Main.transform().Backward().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
         }
         if(Input.GetKeyHold(GLFW.GLFW_KEY_D))
         {
-            Camera.Main.Transform().SetGlobalPosition(Vector3D.Add(Camera.Main.Transform().GetGlobalPosition(), Camera.Main.Transform().Left().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
+            Camera.Main.transform().SetGlobalPosition(Vector3D.Add(Camera.Main.transform().GetGlobalPosition(), Camera.Main.transform().Left().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
         }
         if(Input.GetKeyHold(GLFW.GLFW_KEY_A))
         {
-            Camera.Main.Transform().SetGlobalPosition(Vector3D.Add(Camera.Main.Transform().GetGlobalPosition(), Camera.Main.Transform().Right().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
+            Camera.Main.transform().SetGlobalPosition(Vector3D.Add(Camera.Main.transform().GetGlobalPosition(), Camera.Main.transform().Right().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
         }
 
         if(Input.GetKeyHold(GLFW.GLFW_KEY_SPACE))
         {
-            Camera.Main.Transform().SetGlobalPosition(Vector3D.Add(Camera.Main.Transform().GetGlobalPosition(), Camera.Main.Transform().Up().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
+            Camera.Main.transform().SetGlobalPosition(Vector3D.Add(Camera.Main.transform().GetGlobalPosition(), Camera.Main.transform().Up().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
         }
         if(Input.GetKeyHold(GLFW.GLFW_KEY_LEFT_CONTROL))
         {
-            Camera.Main.Transform().SetGlobalPosition(Vector3D.Add(Camera.Main.Transform().GetGlobalPosition(), Camera.Main.Transform().Down().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
+            Camera.Main.transform().SetGlobalPosition(Vector3D.Add(Camera.Main.transform().GetGlobalPosition(), Camera.Main.transform().Down().Scale((float)Time.DeltaTime() * MOVEMENT_SPEED)));
         }
 
         if (Input.GetKeyHold(GLFW.GLFW_KEY_L))
         {
-            Camera.Main.Transform().RotateAxis(Vector3D.Up, -ROTATION_SPEED * (float)Time.DeltaTime());
+            Camera.Main.transform().RotateAxis(Vector3D.Up, -ROTATION_SPEED * (float)Time.DeltaTime());
         }
         if (Input.GetKeyHold(GLFW.GLFW_KEY_J))
         {
-            Camera.Main.Transform().RotateAxis(Vector3D.Up, ROTATION_SPEED * (float)Time.DeltaTime());
+            Camera.Main.transform().RotateAxis(Vector3D.Up, ROTATION_SPEED * (float)Time.DeltaTime());
         }
         if (Input.GetKeyHold(GLFW.GLFW_KEY_K))
         {
-            Camera.Main.Transform().RotateAxis(Camera.Main.Transform().Right(), -ROTATION_SPEED * (float)Time.DeltaTime());
+            Camera.Main.transform().RotateAxis(Camera.Main.transform().Right(), -ROTATION_SPEED * (float)Time.DeltaTime());
         }
         if (Input.GetKeyHold(GLFW.GLFW_KEY_I))
         {
-            Camera.Main.Transform().RotateAxis(Camera.Main.Transform().Right(), ROTATION_SPEED * (float)Time.DeltaTime());
+            Camera.Main.transform().RotateAxis(Camera.Main.transform().Right(), ROTATION_SPEED * (float)Time.DeltaTime());
         }
 
 
         if(Input.GetKeyDown(GLFW.GLFW_KEY_R))
         {
-            Camera.Main.Transform().SetGlobalRotation(Quaternion.Identity);
-            Camera.Main.Transform().SetGlobalPosition(Vector3D.Zero);
+            Camera.Main.transform().SetGlobalRotation(Quaternion.Identity);
+            Camera.Main.transform().SetGlobalPosition(Vector3D.Zero);
         }
 
     }

@@ -7,7 +7,6 @@ import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
 /**
  * Class representing an object's transform, containing information about position, rotation, scale and hierarchy
@@ -89,7 +88,7 @@ public class Transform extends BaseEngineClass
     {
         return transformationMatrix;
     }
-    public JGameObject Object()
+    public JGameObject object()
     {
         return object;
     }

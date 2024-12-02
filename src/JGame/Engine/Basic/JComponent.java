@@ -21,7 +21,15 @@ public abstract class JComponent extends BaseEngineClass
     private Transform transform;
     private BillboardRenderer iconRenderer;
 
-    private Event1P<Boolean> debugViewCallback;
+    private final Event1P<Boolean> debugViewCallback = new Event1P<>()
+    {
+        @Override
+        protected void OnInvoke(Boolean param)
+        {
+            if(iconRenderer != null)
+                iconRenderer.SetActive(param);
+        }
+    };
 
     /**
      * Factory method to create a JComponent and bind it to a JGameObject.
@@ -41,7 +49,7 @@ public abstract class JComponent extends BaseEngineClass
             T comp =  constructor.newInstance();
             ((JComponent)comp).InitializeComponent(object);
 
-            comp.Initialize();
+            comp._internalInitialize();
             comp.OnEnable();
 
             return comp;
@@ -55,11 +63,11 @@ public abstract class JComponent extends BaseEngineClass
     private void InitializeComponent(JGameObject object)
     {
         this.object = object;
-        this.transform = object.Transform();
+        this.transform = object.transform();
         Texture image = GetIcon();
         if(image != null)
         {
-            iconRenderer = this.Object().AddComponent(BillboardRenderer.class);
+            iconRenderer = this.object().AddComponent(BillboardRenderer.class);
             iconRenderer.SetImage(image);
             iconRenderer.SetActive(Settings.Engine.GetDebugView());
         }
@@ -69,16 +77,6 @@ public abstract class JComponent extends BaseEngineClass
         }
 
         allJComponents.add(this);
-
-        debugViewCallback = new Event1P<>()
-        {
-            @Override
-            protected void OnInvoke(Boolean param)
-            {
-                if(iconRenderer != null)
-                    iconRenderer.SetActive(param);
-            }
-        };
 
         Settings.Engine.changeDebugViewEvent.Subscribe(debugViewCallback);
     }
@@ -134,11 +132,11 @@ public abstract class JComponent extends BaseEngineClass
         return GetActive() && object.IsAvailable();
     }
 
-    public JGameObject Object()
+    public JGameObject object()
     {
         return object;
     }
-    public Transform Transform()
+    public Transform transform()
     {
         return transform;
     }

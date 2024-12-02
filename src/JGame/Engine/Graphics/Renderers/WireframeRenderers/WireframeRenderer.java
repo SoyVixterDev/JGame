@@ -1,6 +1,5 @@
 package JGame.Engine.Graphics.Renderers.WireframeRenderers;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Camera;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Models.Mesh;
@@ -22,7 +21,7 @@ public class WireframeRenderer extends Renderer
     );
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         super.Initialize();
         SetColor(color);
@@ -41,8 +40,8 @@ public class WireframeRenderer extends Renderer
 
         shader.UpdateShaderMatrices
         (
-            Object().Transform().GetTransformationMatrix(),
-            Object().Transform().GetGlobalRotation().ToRotationMatrix(),
+            object().transform().GetTransformationMatrix(),
+            object().transform().GetGlobalRotation().ToRotationMatrix(),
             Camera.GetViewMatrix(),
             Camera.GetProjectionMatrix()
         );

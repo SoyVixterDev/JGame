@@ -1,10 +1,8 @@
 package JGame.Engine.Physics.Bodies;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.EventSystem.Event;
 import JGame.Engine.Internal.Logger;
 import JGame.Engine.Internal.Time;
-import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
 import JGame.Engine.Physics.Collision.Colliders.Collider;
 import JGame.Engine.Physics.Collision.Detection.BroadCollisionDetection;
@@ -20,7 +18,6 @@ import JGame.Engine.Structures.Matrix3x3;
 import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
 
-import javax.naming.InitialContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -124,45 +121,42 @@ public class Rigidbody extends PhysicsObject
 
     //-Events-
 
-    private Event updateWorldSpaceInertiaTensor;
-    private Event updateInBVHTree;
+    private final Event updateWorldSpaceInertiaTensor = new Event()
+    {
+        @Override
+        protected void OnInvoke()
+        {
+            UpdateWorldInertiaTensor();
+        }
+    };
+    private final Event updateInBVHTree = new Event()
+    {
+        @Override
+        protected void OnInvoke()
+        {
+            UpdateInHierarchy();
+        }
+    };
 
     //------Engine Callbacks------
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         RegisterConstantForces();
 
-        targetPosition = Transform().GetGlobalPosition();
-        targetRotation = Transform().GetGlobalRotation();
+        targetPosition = transform().GetGlobalPosition();
+        targetRotation = transform().GetGlobalRotation();
 
         CalculateInverseInertiaTensor();
-
-        updateWorldSpaceInertiaTensor = new Event()
-        {
-            @Override
-            protected void OnInvoke()
-            {
-                UpdateWorldInertiaTensor();
-            }
-        };
-        updateInBVHTree = new Event()
-        {
-            @Override
-            protected void OnInvoke()
-            {
-                UpdateInHierarchy();
-            }
-        };
     }
 
     @Override
     protected void OnEnable()
     {
         super.OnEnable();
-        Transform().OnChangeRotation.Subscribe(updateWorldSpaceInertiaTensor);
-        Transform().OnChangePosition.Subscribe(updateInBVHTree);
+        transform().OnChangeRotation.Subscribe(updateWorldSpaceInertiaTensor);
+        transform().OnChangePosition.Subscribe(updateInBVHTree);
 
         BroadCollisionDetection.BVHTree.Insert(this);
     }
@@ -171,8 +165,8 @@ public class Rigidbody extends PhysicsObject
     protected void OnDisable()
     {
         super.OnDisable();
-        Transform().OnChangeRotation.Unsubscribe(updateWorldSpaceInertiaTensor);
-        Transform().OnChangePosition.Unsubscribe(updateInBVHTree);
+        transform().OnChangeRotation.Unsubscribe(updateWorldSpaceInertiaTensor);
+        transform().OnChangePosition.Unsubscribe(updateInBVHTree);
 
         BroadCollisionDetection.BVHTree.Remove(this);
     }
@@ -182,7 +176,6 @@ public class Rigidbody extends PhysicsObject
     {
         if (bodyType == BodyType.Static)
         {
-            ClearAccumulators();
             return;
         }
 
@@ -207,8 +200,8 @@ public class Rigidbody extends PhysicsObject
 
         if (!interpolate)
         {
-            Transform().SetGlobalPosition(targetPosition);
-            Transform().SetGlobalRotation(targetRotation);
+            transform().SetGlobalPosition(targetPosition);
+            transform().SetGlobalRotation(targetRotation);
         }
 
         ClearAccumulators();
@@ -219,9 +212,7 @@ public class Rigidbody extends PhysicsObject
      */
     protected void LinearIntegration()
     {
-        linearAcceleration = forceAccum.Clone();
-
-        linearAcceleration = linearAcceleration.Scale(inverseMass);
+        linearAcceleration = forceAccum.Scale(inverseMass);
 
         //V = Vo + a * t, t = PhysicsDeltaTime
         linearVelocity = linearVelocity.AddScaledVector(linearAcceleration,
@@ -229,7 +220,7 @@ public class Rigidbody extends PhysicsObject
 
         //d = do + V * t, t = PhysicsDeltaTime
         targetPosition = targetPosition.AddScaledVector(linearVelocity.Multiply(movementConstraints.AsVector()),
-                (float) Settings.Physics.physicsUpdateInterval * Time.timeScale);
+                (float)  Settings.Physics.physicsUpdateInterval * Time.timeScale);
     }
 
     /**
@@ -241,11 +232,11 @@ public class Rigidbody extends PhysicsObject
 
         //V = Vo + a * t, t = PhysicsDeltaTime
         angularVelocity = angularVelocity.AddScaledVector(angularAcceleration,
-                (float) Settings.Physics.physicsUpdateInterval * Time.timeScale);
+                (float)  Settings.Physics.physicsUpdateInterval * Time.timeScale);
 
         //q = qo + V * t, t = PhysicsDeltaTime
         targetRotation = targetRotation.AddScaledVector(angularVelocity.Multiply(rotationConstraints.AsVector()),
-                (float) Settings.Physics.physicsUpdateInterval * Time.timeScale);
+                (float)  Settings.Physics.physicsUpdateInterval * Time.timeScale);
     }
 
     /**
@@ -253,14 +244,14 @@ public class Rigidbody extends PhysicsObject
      */
     protected void Interpolate()
     {
-        float interpolationFactor = (float) (Time.PhysicsDeltaTime() / Settings.Physics.physicsUpdateInterval);
+        float interpolationFactor = (float) (Time.DeltaTime() / Settings.Physics.physicsUpdateInterval);
         interpolationFactor = Math.min(interpolationFactor, 1.0f);
 
-        Vector3D newPos = Vector3D.Lerp(Transform().GetGlobalPosition(), targetPosition, interpolationFactor);
-        Transform().SetGlobalPosition(newPos);
+        Vector3D newPos = Vector3D.Lerp(transform().GetGlobalPosition(), targetPosition, interpolationFactor);
+        transform().SetGlobalPosition(newPos);
 
-        Quaternion newRotation = Quaternion.Lerp(Transform().GetGlobalRotation(), targetRotation, interpolationFactor);
-        Transform().SetGlobalRotation(newRotation);
+        Quaternion newRotation = Quaternion.Lerp(transform().GetGlobalRotation(), targetRotation, interpolationFactor);
+        transform().SetGlobalRotation(newRotation);
     }
 
     /**
@@ -357,9 +348,9 @@ public class Rigidbody extends PhysicsObject
             return;
 
         if(localCoordinates)
-            point = Transform().LocalToWorldSpace(point);
+            point = transform().LocalToWorldSpace(point);
 
-        point = point.Subtract(Transform().GetGlobalPosition());
+        point = point.Subtract(targetPosition);
 
         if(forceType == ForceType.Impulse)
         {
@@ -445,7 +436,7 @@ public class Rigidbody extends PhysicsObject
      */
     private void UpdateWorldInertiaTensor()
     {
-        float[] transformationValues = Transform().GetTransformationMatrix().values;
+        float[] transformationValues = transform().GetTransformationMatrix().values;
         float[] inertiaValues = inverseInertiaTensor.values;
 
         float t4 = transformationValues[0] * inertiaValues[0] +
@@ -521,6 +512,7 @@ public class Rigidbody extends PhysicsObject
     public void AddCollider(Collider collider)
     {
         colliders.add(collider);
+        UpdateInHierarchy();
     }
 
     /**
@@ -529,6 +521,7 @@ public class Rigidbody extends PhysicsObject
     public void RemoveCollider(Collider collider)
     {
         colliders.remove(collider);
+        UpdateInHierarchy();
     }
 
     /**
@@ -538,7 +531,14 @@ public class Rigidbody extends PhysicsObject
      */
     public BoundingVolume GetBoundingVolume()
     {
-        return new BoundingBox(Vector3D.Zero, Vector3D.One);
+        if(!colliders.isEmpty())
+        {
+            List<BoundingVolume> boundingVolumes = colliders.stream().map(Collider::GetBoundingVolume).toList();
+
+            return BoundingVolume.GenerateFromBounds(boundingVolumes);
+        }
+
+        return null;
     }
 
     /**

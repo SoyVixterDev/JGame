@@ -1,6 +1,5 @@
 package JGame.Engine.Graphics.Renderers;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Lighting.Light;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Models.Mesh;
@@ -10,8 +9,6 @@ import JGame.Engine.Interfaces.Graphics.ILightHandler;
 import JGame.Engine.Settings;
 import JGame.Engine.Structures.Matrix4x4;
 import JGame.Engine.Structures.Vector3D;
-
-import javax.naming.InitialContext;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -27,7 +24,7 @@ public class MeshRenderer extends Renderer implements ILightHandler
     public boolean castShadows = true;
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         super.Initialize();
         material = new Material(material);
@@ -66,20 +63,20 @@ public class MeshRenderer extends Renderer implements ILightHandler
 
     public void RenderOverride(Shader shader)
     {
-        RenderOverride(shader, false, BackfaceCullingOverride.DEFAULT, new Matrix4x4[]{Camera.GetViewMatrix()}, Camera.GetProjectionMatrix(), Camera.Main.Transform().GetGlobalPosition());
+        RenderOverride(shader, false, BackfaceCullingOverride.DEFAULT, new Matrix4x4[]{Camera.GetViewMatrix()}, Camera.GetProjectionMatrix(), Camera.Main.transform().GetGlobalPosition());
     }
 
     public void RenderOverride(Shader shader, boolean ignoreLight, BackfaceCullingOverride cullingOverride, Matrix4x4[] viewMatrix, Matrix4x4 projectionMatrix, Vector3D eyePosition)
     {
-        if(!IsAvailable())
+        if(!IsAvailable() || mesh == null)
             return;
 
         shader.Bind();
 
         shader.UpdateShaderMatrices
         (
-                Object().Transform().GetTransformationMatrix(),
-                Object().Transform().GetGlobalRotation().ToRotationMatrix(),
+                object().transform().GetTransformationMatrix(),
+                object().transform().GetGlobalRotation().ToRotationMatrix(),
                 viewMatrix,
                 projectionMatrix
         );
@@ -141,7 +138,7 @@ public class MeshRenderer extends Renderer implements ILightHandler
     @Override
     protected void OnDestroy()
     {
-        mesh.Destroy();
-        material.Destroy();
+        if(mesh != null) mesh.Destroy();
+        if(material != null) material.Destroy();
     }
 }

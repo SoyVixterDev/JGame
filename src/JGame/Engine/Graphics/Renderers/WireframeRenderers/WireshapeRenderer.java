@@ -1,6 +1,5 @@
 package JGame.Engine.Graphics.Renderers.WireframeRenderers;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Camera;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Renderers.Renderer;
@@ -10,6 +9,7 @@ import static org.lwjgl.opengl.GL46.*;
 
 public abstract class WireshapeRenderer extends Renderer
 {
+    public float lineWidth = 2.0f;
     private final Shader shader = new Shader
     (
             "/Shaders/Internal/Wireframe/wireframeVertShader.glsl",
@@ -22,8 +22,10 @@ public abstract class WireshapeRenderer extends Renderer
     abstract protected int[] GetEdges();
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
+        super.Initialize();
+
         VAO = glGenVertexArrays();
         VBO = glGenBuffers();
         EBO = glGenBuffers();
@@ -52,8 +54,8 @@ public abstract class WireshapeRenderer extends Renderer
 
         shader.UpdateShaderMatrices
         (
-            Object().Transform().GetTransformationMatrix(),
-            Object().Transform().GetGlobalRotation().ToRotationMatrix(),
+            object().transform().GetTransformationMatrix(),
+            object().transform().GetGlobalRotation().ToRotationMatrix(),
             Camera.GetViewMatrix(),
             Camera.GetProjectionMatrix()
         );
@@ -62,7 +64,7 @@ public abstract class WireshapeRenderer extends Renderer
         glEnableVertexAttribArray(0);
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glLineWidth(2.0f);
+        glLineWidth(lineWidth);
 
         glDrawElements(GL_LINES, GetEdges().length, GL_UNSIGNED_INT, 0);
 
@@ -73,7 +75,8 @@ public abstract class WireshapeRenderer extends Renderer
         shader.Unbind();
     }
 
-    protected void UpdateVertices() {
+    protected void UpdateVertices()
+    {
         float[] vertices = GetVertices();
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);

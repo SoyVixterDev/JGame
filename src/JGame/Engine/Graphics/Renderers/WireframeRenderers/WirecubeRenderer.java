@@ -1,33 +1,28 @@
 package JGame.Engine.Graphics.Renderers.WireframeRenderers;
 
-import JGame.Engine.Basic.JGameObject;
-import JGame.Engine.Graphics.Lighting.DirectionalLight;
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Vector3D;
 
 public class WirecubeRenderer extends WireshapeRenderer
 {
-    private Vector3D size = Vector3D.One;
+    private Vector3D halfSize = Vector3D.One.Scale(0.5f);
     private Vector3D centerOffset =  Vector3D.Zero;
 
     @Override
     protected float[] GetVertices()
     {
-        Vector3D size = this.size.Scale(0.5f);
-
         return new float[]
         {
                 // Back face
-                -size.x + centerOffset.x, -size.y + centerOffset.y, -size.z + centerOffset.z,
-                size.x + centerOffset.x, -size.y + centerOffset.y, -size.z + centerOffset.z,
-                size.x + centerOffset.x,  size.y + centerOffset.y, -size.z + centerOffset.z,
-                -size.x + centerOffset.x,  size.y + centerOffset.y, -size.z + centerOffset.z,
+                -halfSize.x + centerOffset.x, -halfSize.y + centerOffset.y, -halfSize.z + centerOffset.z,
+                halfSize.x + centerOffset.x, -halfSize.y + centerOffset.y, -halfSize.z + centerOffset.z,
+                halfSize.x + centerOffset.x,  halfSize.y + centerOffset.y, -halfSize.z + centerOffset.z,
+                -halfSize.x + centerOffset.x,  halfSize.y + centerOffset.y, -halfSize.z + centerOffset.z,
 
                 // Front face
-                -size.x + centerOffset.x, -size.y + centerOffset.y,  size.z + centerOffset.z,
-                size.x + centerOffset.x, -size.y + centerOffset.y,  size.z + centerOffset.z,
-                size.x + centerOffset.x,  size.y + centerOffset.y,  size.z + centerOffset.z,
-                -size.x + centerOffset.x,  size.y + centerOffset.y,  size.z + centerOffset.z
+                -halfSize.x + centerOffset.x, -halfSize.y + centerOffset.y,  halfSize.z + centerOffset.z,
+                halfSize.x + centerOffset.x, -halfSize.y + centerOffset.y,  halfSize.z + centerOffset.z,
+                halfSize.x + centerOffset.x,  halfSize.y + centerOffset.y,  halfSize.z + centerOffset.z,
+                -halfSize.x + centerOffset.x,  halfSize.y + centerOffset.y,  halfSize.z + centerOffset.z
         };
     }
 
@@ -37,9 +32,9 @@ public class WirecubeRenderer extends WireshapeRenderer
         UpdateVertices();
     }
 
-    public void SetSize(Vector3D size)
+    public void SetHalfSize(Vector3D size)
     {
-        this.size = size;
+        this.halfSize = size;
         UpdateVertices();
     }
 

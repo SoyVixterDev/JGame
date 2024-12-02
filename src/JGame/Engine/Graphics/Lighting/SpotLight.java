@@ -1,6 +1,5 @@
 package JGame.Engine.Graphics.Lighting;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Settings;
 import JGame.Engine.Structures.Matrix4x4;
@@ -18,7 +17,7 @@ public class SpotLight extends PointLight
     private float outerCone = 0.70710678f;
 
     @Override
-    public void Initialize()
+    protected void Initialize()
     {
         super.Initialize();
         minShadowBias = 0.00005f;
@@ -33,7 +32,7 @@ public class SpotLight extends PointLight
         super.UpdateLightValues(shader, index);
         String lightIndex = "lights[" + index + "]";
 
-        shader.SetUniformProperty(lightIndex + ".forward", Transform().Forward(), true);
+        shader.SetUniformProperty(lightIndex + ".forward", transform().Forward(), true);
         shader.SetUniformProperty(lightIndex + ".outerCone", outerCone, true);
         shader.SetUniformProperty(lightIndex + ".innerCone", innerCone, true);
         shader.SetUniformProperty(lightIndex + ".type", LIGHT_TYPE_SPOT, true);
@@ -61,6 +60,6 @@ public class SpotLight extends PointLight
     @Override
     protected Matrix4x4[] CalculateViewMatrices()
     {
-        return new Matrix4x4[]{CameraMatrixUtilities.LookAt(Transform().GetGlobalPosition(), Transform().Backward(), Transform().Up())};
+        return new Matrix4x4[]{CameraMatrixUtilities.LookAt(transform().GetGlobalPosition(), transform().Backward(), transform().Up())};
     }
 }

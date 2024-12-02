@@ -1,11 +1,11 @@
 package JGame.Application;
 
+import JGame.Engine.Graphics.Misc.Camera;
+import JGame.Engine.Input.Input;
 import JGame.Engine.Internal.Logger;
 import JGame.Engine.Internal.Time;
-import JGame.Engine.Graphics.Misc.Camera;
 import JGame.Engine.Structures.ColorRGBA;
 import JGame.Engine.Structures.Vector2D;
-import JGame.Engine.Input.Input;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;

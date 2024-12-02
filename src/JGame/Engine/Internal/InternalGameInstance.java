@@ -12,9 +12,9 @@ public abstract class InternalGameInstance
     /**
      * Handles calling the initialization function in the game instance
      */
-    public static void _internalInitialize()
+    public final void _internalInitialize()
     {
-        Instance.Initialize();
+        Initialize();
     }
 
     /**
@@ -56,7 +56,7 @@ public abstract class InternalGameInstance
     /**
      * Called right after the object is being created
      */
-    public void Initialize() { }
+    protected void Initialize() { }
 
     /**
      * Called before the first update

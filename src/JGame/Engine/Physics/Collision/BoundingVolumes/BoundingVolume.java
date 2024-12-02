@@ -4,6 +4,9 @@ import JGame.Engine.Basic.Transform;
 import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Vector3D;
 
+import java.util.Arrays;
+import java.util.List;
+
 public abstract class BoundingVolume
 {
     public enum BoundingType
@@ -34,6 +37,7 @@ public abstract class BoundingVolume
         return false;
     }
 
+
     /**
      * Generates a bounding volume encapsulating the volumes, matching the type of the first volume
      * @param volumes
@@ -43,30 +47,41 @@ public abstract class BoundingVolume
      */
     public static BoundingVolume GenerateFromBounds(BoundingVolume... volumes)
     {
-        if (volumes == null || volumes.length == 0)
+        return GenerateFromBounds(Arrays.stream(volumes).toList());
+    }
+
+    /**
+     * Generates a bounding volume encapsulating the volumes, matching the type of the first volume
+     * @param volumes
+     * The volumes to encapsulate
+     * @return
+     * The volume that encapsulates the input
+     */
+    public static BoundingVolume GenerateFromBounds(List<BoundingVolume> volumes)
+    {
+        if (volumes == null || volumes.isEmpty())
         {
             throw new IllegalArgumentException("Volume list cannot be null or empty");
         }
 
         BoundingType type;
 
-        if(volumes[0] instanceof BoundingBox)
+        if(volumes.get(0) instanceof BoundingBox)
         {
             type = BoundingType.Box;
         }
-        else if(volumes[0] instanceof BoundingSphere)
+        else if(volumes.get(0) instanceof BoundingSphere)
         {
             type = BoundingType.Sphere;
         }
         else
         {
-            Logger.DebugWarning("Bounding Volume type \"" + volumes[0].getClass().getName() + "\" not recognized!");
+            Logger.DebugWarning("Bounding Volume type \"" + volumes.get(0).getClass().getName() + "\" not recognized!");
             return null;
         }
 
         return GenerateFromBounds(type, volumes);
     }
-
     /**
      * Generates a bounding volume of the selected type that encapsulates all the volumes in the list
      * @param type
@@ -78,7 +93,20 @@ public abstract class BoundingVolume
      */
     public static BoundingVolume GenerateFromBounds(BoundingType type, BoundingVolume... volumes)
     {
-        if (volumes == null || volumes.length == 0)
+        return GenerateFromBounds(type, Arrays.stream(volumes).toList());
+    }
+    /**
+     * Generates a bounding volume of the selected type that encapsulates all the volumes in the list
+     * @param type
+     * The type of bounding volume to generate
+     * @param volumes
+     * The volumes to encapsulate
+     * @return
+     * The final volume
+     */
+    public static BoundingVolume GenerateFromBounds(BoundingType type, List<BoundingVolume> volumes)
+    {
+        if (volumes == null || volumes.isEmpty())
         {
             throw new IllegalArgumentException("Volume list cannot be null or empty");
         }
@@ -90,7 +118,7 @@ public abstract class BoundingVolume
         };
     }
 
-    private static BoundingBox GenerateBoundingBox(BoundingVolume... volumes)
+    private static BoundingBox GenerateBoundingBox(List<BoundingVolume> volumes)
     {
         Vector3D min = new Vector3D(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
         Vector3D max = new Vector3D(-Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
@@ -121,7 +149,7 @@ public abstract class BoundingVolume
         return new BoundingBox(center, halfSize);
     }
 
-    private static BoundingSphere GenerateBoundingSphere(BoundingVolume... volumes)
+    private static BoundingSphere GenerateBoundingSphere(List<BoundingVolume> volumes)
     {
         Vector3D center = Vector3D.Zero;
         int count = 0;
