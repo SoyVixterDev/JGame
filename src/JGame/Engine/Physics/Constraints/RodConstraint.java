@@ -25,18 +25,18 @@ public class RodConstraint extends LinkConstraint
 
         Vector3D normal = rigidbodies[1].transform().GetGlobalPosition().Subtract(rigidbodies[0].transform().GetGlobalPosition()).Normalized();
 
-        if(currentLength > length)
-        {
-            contacts[0].contactNormal = normal;
-            contacts[0].penetration = currentLength - length;
-        }
-        else
-        {
-            contacts[0].contactNormal = normal.Negate();
-            contacts[0].penetration = length - currentLength;
-        }
-
-        contacts[0].restitution = 0;
+//        if(currentLength > length)
+//        {
+//            contacts[0].contactNormal = normal;
+//            contacts[0].penetration = currentLength - length;
+//        }
+//        else
+//        {
+//            contacts[0].contactNormal = normal.Negate();
+//            contacts[0].penetration = length - currentLength;
+//        }
+//
+//        contacts[0].restitution = 0;
 
         return 1;
     }

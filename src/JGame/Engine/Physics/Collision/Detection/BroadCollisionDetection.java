@@ -1,5 +1,6 @@
 package JGame.Engine.Physics.Collision.Detection;
 
+import JGame.Engine.Basic.BaseObject;
 import JGame.Engine.Physics.Collision.BoundingVolumeHierarchy.BVHManager;
 import JGame.Engine.Physics.Collision.Contacts.PotentialContact;
 
@@ -10,7 +11,7 @@ import java.util.List;
  */
 public class BroadCollisionDetection
 {
-    public final static BVHManager BVHTree = new BVHManager();
+    public final static BVHManager BVHTree = BaseObject.CreateInstance(BVHManager.class);
 
     public static List<PotentialContact> GetPotentialContacts()
     {

@@ -1,13 +1,16 @@
 package JGame.Engine.Physics.Collision.Colliders;
 
+import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WirecubeRenderer;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
 import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
 
 import java.util.List;
+import java.util.Vector;
 
 public class BoxCollider extends Collider
 {
@@ -57,7 +60,14 @@ public class BoxCollider extends Collider
     @Override
     public BoundingVolume GetBoundingVolume()
     {
-        return new BoundingBox(center.Add(transform().GetGlobalPosition()), halfSize.Multiply(transform().GetGlobalScale()));
+        Vector3D globalPosition = transform().GetGlobalPosition();
+        Quaternion globalRotation = transform().GetGlobalRotation();
+        Vector3D scaledHalfSize = halfSize.Multiply(transform().GetGlobalScale());
+
+        Vector3D boundHalfSize =  scaledHalfSize.Rotate(globalRotation.ToRotationMatrix().Absolute());
+        Vector3D boundCenter = center.Add(globalPosition);
+
+        return new BoundingBox(boundCenter, boundHalfSize);
     }
 
     @Override

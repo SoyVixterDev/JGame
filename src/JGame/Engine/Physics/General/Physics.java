@@ -1,8 +1,7 @@
 package JGame.Engine.Physics.General;
 
-import JGame.Engine.Basic.BaseEngineClass;
+import JGame.Engine.Basic.BaseObject;
 import JGame.Engine.Internal.InternalGameInstance;
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Physics.Interfaces.IForceGenerator;
 import JGame.Engine.Physics.Bodies.Rigidbody;
@@ -10,7 +9,6 @@ import JGame.Engine.Settings;
 import JGame.Engine.Structures.Vector3D;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
 public class Physics
 {
@@ -42,7 +40,7 @@ public class Physics
             InternalGameInstance.Instance._internalPhysicsUpdate();
 
             // Run physics update on all objects
-            for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
+            for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
             {
                 if(baseObj != null && baseObj.IsAvailable())
                 {

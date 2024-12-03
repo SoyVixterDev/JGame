@@ -140,5 +140,7 @@ public class MeshRenderer extends Renderer implements ILightHandler
     {
         if(mesh != null) mesh.Destroy();
         if(material != null) material.Destroy();
+
+        super.OnDestroy();
     }
 }

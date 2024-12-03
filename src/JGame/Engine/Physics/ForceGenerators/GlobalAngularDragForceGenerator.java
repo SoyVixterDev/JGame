@@ -1,6 +1,5 @@
 package JGame.Engine.Physics.ForceGenerators;
 
-import JGame.Engine.Basic.BaseEngineClass;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Interfaces.IForceGenerator;
 import JGame.Engine.Structures.Vector3D;

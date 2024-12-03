@@ -14,9 +14,10 @@ import java.util.ArrayList;
  * if a component is attached to a JGameObject then the different callback functions such as Start, Update and OnDestroy
  * will be called accordingly.
  */
-public abstract class JComponent extends BaseEngineClass
+public abstract class JComponent extends BaseObject
 {
     public static final ArrayList<JComponent> allJComponents = new ArrayList<>();
+
     private JGameObject object;
     private Transform transform;
     private BillboardRenderer iconRenderer;
@@ -69,7 +70,7 @@ public abstract class JComponent extends BaseEngineClass
         {
             iconRenderer = this.object().AddComponent(BillboardRenderer.class);
             iconRenderer.SetImage(image);
-            iconRenderer.SetActive(Settings.Engine.GetDebugView());
+            iconRenderer.SetActive(Settings.Debug.GetDebugView());
         }
         else
         {
@@ -78,15 +79,17 @@ public abstract class JComponent extends BaseEngineClass
 
         allJComponents.add(this);
 
-        Settings.Engine.changeDebugViewEvent.Subscribe(debugViewCallback);
+        Settings.Debug.changeDebugViewEvent.Subscribe(debugViewCallback);
     }
 
     @Override
     public final void Destroy()
     {
-        Settings.Engine.changeDebugViewEvent.Unsubscribe(debugViewCallback);
+        Settings.Debug.changeDebugViewEvent.Unsubscribe(debugViewCallback);
         object.JComponents.remove(this);
         super.Destroy();
+        allJComponents.remove(this);
+        object = null;
     }
 
     /**

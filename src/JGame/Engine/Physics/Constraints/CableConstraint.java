@@ -29,12 +29,12 @@ public class CableConstraint extends LinkConstraint
         if(length < maxLength)
             return 0;
 
-        contacts[0].rigidbodies[0] = rigidbodies[0];
-        contacts[0].rigidbodies[1] = rigidbodies[1];
-
-        contacts[0].contactNormal = rigidbodies[1].transform().GetGlobalPosition().Subtract(rigidbodies[0].transform().GetGlobalPosition()).Normalized();
-        contacts[0].penetration = length - maxLength;
-        contacts[0].restitution = restitution;
+//        contacts[0].rigidbodies[0] = rigidbodies[0];
+//        contacts[0].rigidbodies[1] = rigidbodies[1];
+//
+//        contacts[0].contactNormal = rigidbodies[1].transform().GetGlobalPosition().Subtract(rigidbodies[0].transform().GetGlobalPosition()).Normalized();
+//        contacts[0].penetration = length - maxLength;
+//        contacts[0].restitution = restitution;
 
         return 1;
     }

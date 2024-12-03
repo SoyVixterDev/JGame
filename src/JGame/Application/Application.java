@@ -1,17 +1,17 @@
 package JGame.Application;
 
-import JGame.Engine.Basic.BaseEngineClass;
+import JGame.Engine.Basic.BaseObject;
 import JGame.Engine.Internal.InternalGameInstance;
 import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Graphics.Renderers.Renderer;
 import JGame.Engine.Input.Input;
 import JGame.Engine.Physics.General.Physics;
-import JGame.Engine.Settings;
 import Project.JGameInstance;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * The class used internally by the engine to start the game application, handles the main application loop.
@@ -39,33 +39,43 @@ public class Application
 
         while(running)
         {
+            double startTime = Time.Current();
+            double frameTime = (double)1.0f / (double)targetFramerate;
 
             GLFW.glfwPollEvents();
-
-//            double startTime = Time.Current();
-//            double frameTime = 1.0f / targetFramerate;
 
             EarlyUpdate();
             Render();
             Update();
             LateUpdate();
 
-//            double elapsedTime = startTime - Time.Current();
-//            double sleepTime = frameTime - elapsedTime; // Time to sleep in seconds
-//
-//            if (sleepTime > 0)
-//            {
-//                try
-//                {
-//                    Thread.sleep((long)(sleepTime * 1000) - 2);
-//                }
-//                catch (InterruptedException ignored){}
-//            }
+            double elapsedTime = Time.Current() - startTime;
+            double sleepTime = frameTime - elapsedTime;
+
+            if (sleepTime >= 0)
+            {
+                Sleep(sleepTime);
+            }
         }
 
         JGameObject.Terminate();
         Window.Terminate();
         Input.Destroy();
+    }
+
+    /**
+     * Busy Waiting precise sleep in seconds
+     * @param seconds
+     * Seconds to sleep
+     */
+    private void Sleep(double seconds)
+    {
+        long targetTime = System.nanoTime() + (long) (seconds * 1_000_000_000);
+
+        while (System.nanoTime() <= targetTime)
+        {
+            Thread.yield();
+        }
     }
 
     /**
@@ -83,7 +93,7 @@ public class Application
     {
         InternalGameInstance.Instance._internalEarlyUpdate();
 
-        for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
+        for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
             {
@@ -102,7 +112,7 @@ public class Application
 
         InternalGameInstance.Instance._internalUpdate();
 
-        for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
+        for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
             {
@@ -118,7 +128,7 @@ public class Application
     private void LateUpdate()
     {
         InternalGameInstance.Instance._internalLateUpdate();
-        for(BaseEngineClass baseObj : new ArrayList<>(BaseEngineClass.allBaseObjects))
+        for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
             {
@@ -139,6 +149,7 @@ public class Application
         Renderer.RenderTransparents();
 
         Window.SwapBuffers();
+
     }
 
 }

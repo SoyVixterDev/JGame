@@ -5,6 +5,7 @@ import JGame.Engine.Structures.Vector3D;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class BoundingVolume
 {
@@ -67,20 +68,28 @@ public abstract class BoundingVolume
 
         BoundingType type;
 
-        if(volumes.get(0) instanceof BoundingBox)
+        BoundingVolume volume = volumes.stream().filter(Objects::nonNull).findFirst().orElse(null);
+
+        if(volume != null)
         {
-            type = BoundingType.Box;
-        }
-        else if(volumes.get(0) instanceof BoundingSphere)
-        {
-            type = BoundingType.Sphere;
+            if(volume instanceof BoundingBox)
+            {
+                type = BoundingType.Box;
+            }
+            else if(volume instanceof BoundingSphere)
+            {
+                type = BoundingType.Sphere;
+            }
+            else
+            {
+                Logger.DebugWarning("Bounding Volume type \"" + volume.getClass().getName() + "\" not recognized!");
+                return null;
+            }
         }
         else
         {
-            Logger.DebugWarning("Bounding Volume type \"" + volumes.get(0).getClass().getName() + "\" not recognized!");
             return null;
         }
-
         return GenerateFromBounds(type, volumes);
     }
     /**
@@ -126,6 +135,9 @@ public abstract class BoundingVolume
 
         for (BoundingVolume volume : volumes)
         {
+            if(volume == null)
+                continue;
+
             if (volume instanceof BoundingBox box)
             {
                 min = Vector3D.Min(min, box.Min());
@@ -158,6 +170,9 @@ public abstract class BoundingVolume
         // Calculate the average center of all volumes
         for (BoundingVolume volume : volumes)
         {
+            if(volume == null)
+                continue;
+
             if (volume instanceof BoundingBox box)
             {
                 center = center.Add(box.center);

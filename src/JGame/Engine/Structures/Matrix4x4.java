@@ -240,6 +240,22 @@ public class Matrix4x4
         return new Matrix4x4(inv);
     }
 
+    /**
+     * Gets the matrix with all its components being absolute values
+     * @return
+     * The absolute matrix
+     */
+    public Matrix4x4 Absolute()
+    {
+        float[] values = new float[16];
+
+        for(int i = 0; i < 16; i++)
+        {
+            values[i] = Math.abs(this.values[i]);
+        }
+
+        return new Matrix4x4(values);
+    }
 
     /**
      * Multiplies two matrices

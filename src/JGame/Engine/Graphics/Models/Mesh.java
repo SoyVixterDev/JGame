@@ -1,7 +1,5 @@
 package JGame.Engine.Graphics.Models;
 
-import JGame.Engine.Basic.BaseEngineClass;
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Interfaces.Graphics.IMeshOpenGLHandler;
 import JGame.Engine.Structures.Vector3D;
 import JGame.Engine.Utilities.FileUtilities;
@@ -107,8 +105,6 @@ public class Mesh implements IMeshOpenGLHandler
             vertices[iVert0].normalVector = normal;
             vertices[iVert1].normalVector = normal;
             vertices[iVert2].normalVector = normal;
-
-            Logger.DebugLog(normal);
         }
 
     }

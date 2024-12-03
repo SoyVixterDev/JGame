@@ -1,5 +1,7 @@
 package JGame.Engine.Physics.Collision.Colliders;
 
+import JGame.Engine.Basic.JGameObject;
+import JGame.Engine.Graphics.Renderers.WireframeRenderers.WirecubeRenderer;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WiresphereRenderer;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
@@ -60,7 +62,10 @@ public class SphereCollider extends Collider
         Vector3D scale =  transform().GetGlobalScale();
         float largestScale = Math.max(Math.max(scale.x, scale.y), scale.z);
 
-        return new BoundingBox(center.Add(transform().GetGlobalPosition()), Vector3D.One.Scale(radius * largestScale));
+        Vector3D boundHalfSize =  Vector3D.One.Scale(radius * largestScale);
+        Vector3D boundCenter = center.Add(transform().GetGlobalPosition());
+
+        return new BoundingBox(boundCenter, boundHalfSize);
     }
 
     @Override

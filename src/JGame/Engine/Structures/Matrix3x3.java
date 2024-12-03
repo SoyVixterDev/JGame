@@ -207,6 +207,25 @@ public class Matrix3x3
                 values[2] * (values[3] * values[7] - values[4] * values[6]);
     }
 
+
+    /**
+     * Gets the matrix with all its components being absolute values
+     * @return
+     * The absolute matrix
+     */
+    public Matrix4x4 Absolute()
+    {
+        float[] values = new float[9];
+
+        for(int i = 0; i < 9; i++)
+        {
+            values[i] = Math.abs(this.values[i]);
+        }
+
+        return new Matrix4x4(values);
+    }
+
+
     @Override
     public String toString()
     {

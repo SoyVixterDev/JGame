@@ -1,5 +1,6 @@
 package JGame.Engine.Basic;
 
+import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
 
@@ -10,20 +11,15 @@ import java.util.Collection;
  * JGameObject that can be instantiated in the world, you can add your own JComponents,
  * and it has access to its transform.
  */
-public class JGameObject extends BaseEngineClass
+public class JGameObject extends BaseObject
 {
     public final static ArrayList<JGameObject> allObjects = new ArrayList<>();
 
+    public String name;
     private Transform transform = new Transform(this);
     ArrayList<JComponent> JComponents = new ArrayList<>();
 
-    JGameObject()
-    {
-        super();
-        OnEnable();
-    }
-
-    //----- Engine Callbacks -----
+    //----- Debug Callbacks -----
 
     /**
      * Destroys the object, its JComponents and recursively does the same for all its children
@@ -50,10 +46,12 @@ public class JGameObject extends BaseEngineClass
 
         JComponents.clear();
 
+        super.Destroy();
+
         transform.Destroy();
         transform = null;
 
-        super.Destroy();
+        allObjects.remove(this);
     }
 
     //------ Other Functions -------
@@ -66,9 +64,9 @@ public class JGameObject extends BaseEngineClass
      * The instantiated object
      */
     @SafeVarargs
-    public static JGameObject Create(Class<? extends JComponent>... components)
+    public static JGameObject Create(String name, Class<? extends JComponent>... components)
     {
-        return Create(Vector3D.Zero, Quaternion.Identity, Vector3D.One, components);
+        return Create(name, Vector3D.Zero, Quaternion.Identity, Vector3D.One, components);
     }
 
     /**
@@ -81,9 +79,9 @@ public class JGameObject extends BaseEngineClass
      * The instantiated object
      */
     @SafeVarargs
-    public static JGameObject Create(Vector3D position, Class<? extends JComponent>... components)
+    public static JGameObject Create(String name, Vector3D position, Class<? extends JComponent>... components)
     {
-        return Create(position, Quaternion.Identity, components);
+        return Create(name, position, Quaternion.Identity, components);
     }
 
 
@@ -99,9 +97,9 @@ public class JGameObject extends BaseEngineClass
      * The instantiated object
      */
     @SafeVarargs
-    public static JGameObject Create(Vector3D position, Quaternion rotation, Class<? extends JComponent>... components)
+    public static JGameObject Create(String name, Vector3D position, Quaternion rotation, Class<? extends JComponent>... components)
     {
-        return Create(position, rotation, Vector3D.One, components);
+        return Create(name, position, rotation, Vector3D.One, components);
     }
 
     /**
@@ -118,9 +116,9 @@ public class JGameObject extends BaseEngineClass
      * The instantiated object
      */
     @SafeVarargs
-    public static JGameObject Create(Vector3D position, Quaternion rotation, Vector3D scale, Class<? extends JComponent>... components)
+    public static JGameObject Create(String name, Vector3D position, Quaternion rotation, Vector3D scale, Class<? extends JComponent>... components)
     {
-        return Create(position, rotation, scale, null, components);
+        return Create(name, position, rotation, scale, null, components);
     }
 
     /**
@@ -139,11 +137,12 @@ public class JGameObject extends BaseEngineClass
      * The instantiated object
      */
     @SafeVarargs
-    public static JGameObject Create(Vector3D position, Quaternion rotation, Vector3D scale, Transform parent, Class<? extends JComponent>... components)
+    public static JGameObject Create(String name, Vector3D position, Quaternion rotation, Vector3D scale, Transform parent, Class<? extends JComponent>... components)
     {
-        JGameObject newObject = new JGameObject();
+        JGameObject newObject = BaseObject.CreateInstance(JGameObject.class);
         allObjects.add(newObject);
 
+        newObject.name = name;
         newObject.transform().SetGlobalPosition(position);
         newObject.transform().SetGlobalRotation(rotation);
         newObject.transform().SetGlobalScale(scale);
@@ -278,13 +277,22 @@ public class JGameObject extends BaseEngineClass
      */
     public static void Terminate()
     {
+
         for(JGameObject object : new ArrayList<>(allObjects))
+        {
             object.Destroy();
+        }
     }
 
     @Override
     protected final boolean CalculateAvailability()
     {
         return GetActive() && (transform.GetParent() == null || transform.GetParent().IsAvailable());
+    }
+
+    @Override
+    public String toString()
+    {
+        return name + " (" + super.toString() + ")";
     }
 }

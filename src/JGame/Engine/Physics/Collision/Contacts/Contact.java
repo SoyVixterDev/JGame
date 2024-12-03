@@ -18,15 +18,19 @@ public class Contact
     /**
      * The resulting coefficient of restitution of the contact
      */
-    public float restitution;
+    public final float restitution;
+    /**
+     *  The point in space where the contact occurred
+     */
+    public final Vector3D contactPoint = Vector3D.Zero;
     /**
      * Normal of contact, from the perspective of the first object
      */
-    public Vector3D contactNormal;
+    public final Vector3D contactNormal;
     /**
      * The depth of penetration at the contact
      */
-    public float penetration;
+    public final float penetration = 0;
 
     Contact(Rigidbody A, Rigidbody B)
     {

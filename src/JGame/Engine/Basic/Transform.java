@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /**
  * Class representing an object's transform, containing information about position, rotation, scale and hierarchy
  */
-public class Transform extends BaseEngineClass
+public class Transform extends BaseObject
 {
     private static final Transform worldParent = new Transform(null);
 

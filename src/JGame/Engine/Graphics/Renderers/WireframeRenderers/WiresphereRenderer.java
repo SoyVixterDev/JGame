@@ -5,8 +5,8 @@ import JGame.Engine.Structures.Vector3D;
 public class WiresphereRenderer extends WireshapeRenderer
 {
     private float radius = 0.5f;
-    private int slices = 8;
-    private int stacks = 8;
+    private int slices = 16;
+    private int stacks = 16;
     private Vector3D center = Vector3D.Zero;
 
     @Override

@@ -1,7 +1,5 @@
 package JGame.Engine.Graphics.Textures;
 
-import JGame.Engine.Basic.BaseEngineClass;
-
 import static org.lwjgl.opengl.GL46.*;
 
 /**

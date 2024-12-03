@@ -155,7 +155,7 @@ public class Camera extends JComponent
      */
     public static JGameObject Create(ProjectionType projectionType)
     {
-        JGameObject object = JGameObject.Create();
+        JGameObject object = JGameObject.Create("Main Camera");
         Camera cam = object.AddComponent(Camera.class);
 
         cam.SetProjectionType(projectionType);

@@ -1,7 +1,5 @@
 package JGame.Engine.Physics.Collision.Colliders;
 
-import JGame.Application.Application;
-import JGame.Application.Window;
 import JGame.Engine.Basic.JComponent;
 import JGame.Engine.EventSystem.Event1P;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
@@ -38,15 +36,15 @@ public abstract class Collider extends JComponent
         colliderRenderer = CreateWireframe();
         colliderRenderer.SetColor(ColorRGBA.Green);
 
-        colliderRenderer.SetActive(Settings.Engine.GetDebugView());
+        colliderRenderer.SetActive(Settings.Debug.GetDebugView());
 
-        Settings.Engine.changeDebugViewEvent.Subscribe(OnDebugView);
+        Settings.Debug.changeDebugViewEvent.Subscribe(OnDebugView);
     }
 
     @Override
     protected void OnDestroy()
     {
-        Settings.Engine.changeDebugViewEvent.Unsubscribe(OnDebugView);
+        Settings.Debug.changeDebugViewEvent.Unsubscribe(OnDebugView);
     }
 
     @Override

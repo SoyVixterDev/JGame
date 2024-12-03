@@ -92,6 +92,7 @@ public abstract class WireshapeRenderer extends Renderer
         glDeleteVertexArrays(VAO);
 
         shader.Destroy();
+
         super.OnDestroy();
     }
 

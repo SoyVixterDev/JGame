@@ -76,6 +76,7 @@ public class WireframeRenderer extends Renderer
     {
         shader.Destroy();
         mesh.Destroy();
+
         super.OnDestroy();
     }
 }

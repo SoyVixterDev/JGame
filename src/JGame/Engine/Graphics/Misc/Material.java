@@ -1,6 +1,5 @@
 package JGame.Engine.Graphics.Misc;
 
-import JGame.Engine.Basic.BaseEngineClass;
 import JGame.Engine.Graphics.Textures.BaseTexture;
 import JGame.Engine.Graphics.Textures.Texture;
 import JGame.Engine.Structures.ColorRGBA;

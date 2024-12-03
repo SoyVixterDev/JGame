@@ -138,7 +138,7 @@ public class Rigidbody extends PhysicsObject
         }
     };
 
-    //------Engine Callbacks------
+    //------Debug Callbacks------
 
     @Override
     protected void Initialize()
@@ -169,6 +169,12 @@ public class Rigidbody extends PhysicsObject
         transform().OnChangePosition.Unsubscribe(updateInBVHTree);
 
         BroadCollisionDetection.BVHTree.Remove(this);
+    }
+
+    @Override
+    protected void OnDestroy()
+    {
+        colliders.clear();
     }
 
     @Override

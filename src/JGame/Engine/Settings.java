@@ -8,10 +8,12 @@ import JGame.Engine.Structures.Vector2D;
  */
 public final class Settings
 {
-    public static final class Engine
+    public static final class Debug
     {
         private static boolean debugView = false;
+        private static boolean debugBVH = false;
         public static final Event1PHandler<Boolean> changeDebugViewEvent = new Event1PHandler<>();
+        public static final Event1PHandler<Boolean> changeDebugBVHEvent = new Event1PHandler<>();
 
         /**
          * Sets the debug view to the desired value and updates all necessary components
@@ -26,6 +28,17 @@ public final class Settings
         public static boolean GetDebugView()
         {
             return debugView;
+        }
+
+        public static boolean GetDebugBVH()
+        {
+            return debugBVH;
+        }
+
+        public static void SetDebugBVH(boolean value)
+        {
+            Debug.debugBVH = value;
+            changeDebugBVHEvent.Invoke(value);
         }
     }
 

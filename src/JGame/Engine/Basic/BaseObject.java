@@ -1,6 +1,7 @@
 package JGame.Engine.Basic;
 
 import JGame.Engine.Internal.Logger;
+import Project.JGameInstance;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -10,13 +11,13 @@ import java.util.ArrayList;
  * The base class for most instanceable classes used by the engine. Handles memory management, reference deletion and provides the
  * primitive versions of the callbacks like Update, PhysicsUpdate, Start, OnEnable, OnDisable, etc
  */
-public abstract class BaseEngineClass
+public abstract class BaseObject
 {
     private boolean enabled = true;
     private boolean available = true;
-    public static final ArrayList<BaseEngineClass> allBaseObjects = new ArrayList<>();
+    public static final ArrayList<BaseObject> allBaseObjects = new ArrayList<>();
 
-    public static <T extends BaseEngineClass> T CreateInstance(Class<T> clazz)
+    public static <T extends BaseObject> T CreateInstance(Class<T> clazz)
     {
         try
         {
@@ -32,11 +33,11 @@ public abstract class BaseEngineClass
         }
         catch (Exception e)
         {
-            throw new RuntimeException("Failed to create instance for " + clazz.getName() + ". Ensure it extends BaseEngineClass and has a default constructor.", e);
+            throw new RuntimeException("Failed to create instance for " + clazz.getName() + ". Ensure it extends BaseObject and has a default constructor.", e);
         }
     }
 
-    private static <T extends BaseEngineClass> Constructor<?> getConstructor(Class<T> clazz, Object[] args) throws NoSuchMethodException
+    private static <T extends BaseObject> Constructor<?> getConstructor(Class<T> clazz, Object[] args) throws NoSuchMethodException
     {
         Constructor<?>[] constructors = clazz.getDeclaredConstructors();
         Constructor<?> targetConstructor = null;
@@ -58,7 +59,11 @@ public abstract class BaseEngineClass
     }
 
 
-    protected BaseEngineClass()
+    /**
+     * Don't use the constructor to instantiate BaseObjects, use BaseObject.CreateInstance(type) instead!
+     * Don't Override this constructor, for initialization logic use the Initialize function!
+     */
+    protected BaseObject()
     {
         allBaseObjects.add(this);
     }
@@ -155,9 +160,11 @@ public abstract class BaseEngineClass
      */
     public void Destroy()
     {
-        OnDisable();
+        SetActive(false);
         OnDestroy();
         ReferenceNullifierHandler(this);
+
+        allBaseObjects.remove(this);
     }
 
     /**
@@ -206,11 +213,11 @@ public abstract class BaseEngineClass
         {
             for(JComponent comp : object.JComponents)
             {
-                ((BaseEngineClass)comp).UpdateAvailability();
+                ((BaseObject)comp).UpdateAvailability();
             }
             for(Transform child : object.transform().GetChildren())
             {
-                ((BaseEngineClass)child.object()).UpdateAvailability();
+                ((BaseObject)child.object()).UpdateAvailability();
             }
         }
     }
@@ -239,42 +246,66 @@ public abstract class BaseEngineClass
     /**
      * Handles nullifying all the references to the target engine class
      * @param target
-     * The BaseEngineClass to be deleted from all references
+     * The BaseObject to be deleted from all references
      */
-    protected static void ReferenceNullifierHandler(BaseEngineClass target)
+    protected static void ReferenceNullifierHandler(BaseObject target)
     {
-        for(BaseEngineClass baseObject : allBaseObjects)
+        for(BaseObject baseObject : allBaseObjects)
         {
             baseObject.NullifyReferencesTo(target);
         }
-    }
 
+        JGameInstance.Instance.NullifyReferencesTo(target);
+    }
     /**
-     * Uses reflection to set all references to target object in this class instance to null
-     * @param target
-     * The object to nullify
+     * Uses reflection to set all references to the target object in this class instance to null,
+     * including fields that are arrays containing references to the target object.
+     * @param target The object to nullify.
      */
-    protected final void NullifyReferencesTo(BaseEngineClass target)
+    protected final void NullifyReferencesTo(BaseObject target)
     {
-        Field[] fields = this.getClass().getDeclaredFields();
-        for (Field field : fields)
+        Class<?> currentClass = this.getClass();
+
+        while (currentClass != null)
         {
-            if (BaseEngineClass.class.isAssignableFrom(field.getType()))
+            Field[] fields = currentClass.getDeclaredFields();
+            for (Field field : fields)
             {
                 field.setAccessible(true);
                 try
                 {
                     Object fieldValue = field.get(this);
-                    if (fieldValue == target)
+
+                    if (BaseObject.class.isAssignableFrom(field.getType()))
                     {
-                        field.set(this, null);
+                        if (fieldValue == target)
+                        {
+                            field.set(this, null);
+                        }
+                    }
+                    else if (field.getType().isArray() && BaseObject.class.isAssignableFrom(field.getType().getComponentType()))
+                    {
+                        BaseObject[] array = (BaseObject[]) fieldValue;
+                        if (array != null)
+                        {
+                            for (int i = 0; i < array.length; i++)
+                            {
+                                if (array[i] == target)
+                                {
+                                    array[i] = null;
+                                }
+                            }
+                        }
                     }
                 }
                 catch (IllegalAccessException e)
                 {
-                    Logger.DebugStackTraceError("An internal error has occurred when destroying an object!", e);
+                    Logger.DebugStackTraceError("An error occurred while nullifying references to: " + target, e);
                 }
             }
+
+            currentClass = currentClass.getSuperclass();
         }
     }
+
 }

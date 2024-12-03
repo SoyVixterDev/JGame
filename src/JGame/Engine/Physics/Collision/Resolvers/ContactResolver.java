@@ -1,6 +1,5 @@
 package JGame.Engine.Physics.Collision.Resolvers;
 
-import JGame.Engine.Basic.BaseEngineClass;
 import JGame.Engine.Physics.Collision.Contacts.Contact;
 
 /**

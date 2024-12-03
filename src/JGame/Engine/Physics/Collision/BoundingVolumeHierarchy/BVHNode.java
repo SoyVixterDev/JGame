@@ -43,6 +43,47 @@ public class BVHNode
     }
 
     /**
+     * Gets the number of descendants from this node
+     * @return
+     * The number of descendants from this node
+     */
+    public int CountDescendants()
+    {
+        if(children == null)
+            return 0;
+
+        if(IsLeaf())
+            return 1;
+
+        int count = 1;
+
+        if(children[0] != null) count += children[0].CountDescendants();
+        if(children[1] != null) count += children[1].CountDescendants();
+
+        return count;
+    }
+
+    /**
+     * Gets the tree structure as a list, with this node as the element
+     * @return
+     * The tree structure as a list
+     */
+    public List<BVHNode> TreeAsList()
+    {
+        List<BVHNode> list = new ArrayList<>();
+
+        list.add(this);
+
+        if(!IsLeaf())
+        {
+            if(children[0] != null) list.addAll(children[0].TreeAsList());
+            if(children[1] != null) list.addAll(children[1].TreeAsList());
+        }
+
+        return list;
+    }
+
+    /**
      * Checks if a node overlaps with this node
      * @param node
      * The other node
@@ -51,6 +92,8 @@ public class BVHNode
      */
     public boolean Overlaps(BVHNode node)
     {
+        if(volume == null) return false;
+        
         return volume.Overlaps(node.volume);
     }
 
@@ -161,7 +204,7 @@ public class BVHNode
 
         volume = BoundingVolume.GenerateFromBounds(children[0].volume, children[1].volume);
 
-        if(parent != null) parent.RecalculateBoundingVolume();
+        if(parent != null && volume != null) parent.RecalculateBoundingVolume();
     }
     /**
      * Removes the node from its hierarchy
@@ -213,7 +256,8 @@ public class BVHNode
         }
 
         body = null;
-        children = null;
+        children[0] = null;
+        children[1] = null;
         volume = null;
         parent = null;
     }
