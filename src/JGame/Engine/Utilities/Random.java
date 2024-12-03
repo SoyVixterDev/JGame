@@ -19,7 +19,7 @@ public class Random
      */
     public static float RandomNumber(float min, float max)
     {
-        return min + rand.nextFloat() * (max - min);
+        return min + rand.nextFloat() * ((max - min) + Float.MIN_VALUE);
     }
     /**
      * Generates a random integer, exclusive
