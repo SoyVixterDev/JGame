@@ -3,6 +3,7 @@ package JGame.Engine.Physics.General;
 import JGame.Engine.Basic.BaseObject;
 import JGame.Engine.Internal.InternalGameInstance;
 import JGame.Engine.Internal.Time;
+import JGame.Engine.Physics.Collision.Detection.CollisionPipeline;
 import JGame.Engine.Physics.Interfaces.IForceGenerator;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Settings;
@@ -47,6 +48,8 @@ public class Physics
                     baseObj._internalPhysicsUpdate();
                 }
             }
+
+            CollisionPipeline.RunPipeline();
 
             physicsTimer -= Settings.Physics.physicsUpdateInterval;
         }
@@ -117,16 +120,6 @@ public class Physics
     {
         forceRegistrations.clear();
     }
-
-
-    public enum RestitutionResolution
-    {
-        Min,
-        Max,
-        Average,
-        Multiply
-    }
-
 
     public static class Constraints
     {

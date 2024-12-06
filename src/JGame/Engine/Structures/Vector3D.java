@@ -11,7 +11,14 @@ public class Vector3D
     public final float y;
     public final float z;
 
+    public Vector3D(float[] xyz)
+    {
+        if(xyz.length != 3) throw new IllegalArgumentException("Vector3D can only be made with arrays of 3 elements!");
 
+        this.x = xyz[0];
+        this.y = xyz[1];
+        this.z = xyz[2];
+    }
 
     public Vector3D(float x, float y, float z)
     {
@@ -485,6 +492,27 @@ public class Vector3D
                         Math.min(a.z, b.z)
                 );
     }
+
+    /**
+     * Returns true if there's a NaN component in the vector
+     * @return
+     * true if there's a NaN component in the vector
+     */
+    public boolean IsNaN()
+    {
+        return (Float.isNaN(x)) || (Float.isNaN(y)) || (Float.isNaN(z));
+    }
+
+    /**
+     * Returns true if all components of the vector are zero
+     * @return
+     * True if all components of the vector are zero
+     */
+    public boolean IsZero()
+    {
+        return this.equals(Zero);
+    }
+
     //Factory variables
     /**
      * Vector3D with components (0, 0, 1)
@@ -536,6 +564,11 @@ public class Vector3D
      */
     public static final Vector3D NegativeInfinity = new Vector3D(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
 
+
+    public float[] ToArray()
+    {
+        return new float[]{x, y, z};
+    }
 
     @Override
     public String toString()

@@ -2,8 +2,8 @@ package JGame.Engine.Physics.Collision.Contacts;
 
 
 import JGame.Engine.Physics.Bodies.Rigidbody;
-import JGame.Engine.Physics.General.Physics;
 import JGame.Engine.Structures.Vector3D;
+import JGame.Engine.Utilities.MathUtilities;
 
 
 /**
@@ -20,9 +20,13 @@ public class Contact
      */
     public final float restitution;
     /**
+     * The resulting coefficient of friction of the contact
+     */
+    public final float friction;
+    /**
      *  The point in space where the contact occurred
      */
-    public final Vector3D contactPoint = Vector3D.Zero;
+    public final Vector3D contactPoint;
     /**
      * Normal of contact, from the perspective of the first object
      */
@@ -30,29 +34,19 @@ public class Contact
     /**
      * The depth of penetration at the contact
      */
-    public final float penetration = 0;
+    public final float penetration;
 
-    Contact(Rigidbody A, Rigidbody B)
-    {
-        this(A, B, Physics.RestitutionResolution.Average);
-    }
-
-    Contact(Rigidbody A, Rigidbody B, Physics.RestitutionResolution resolution)
+    public Contact(Rigidbody A, Rigidbody B, Vector3D contactPoint, Vector3D contactNormal, float penetration)
     {
         rigidbodies[0] = A;
         rigidbodies[1] = B;
 
-        contactNormal = Vector3D.Subtract(B.transform().GetGlobalPosition(), A.transform().GetGlobalPosition()).Normalized();
+        this.contactNormal = contactNormal;
+        this.contactPoint = contactPoint;
+        this.penetration = penetration;
 
-        switch (resolution)
-        {
-            case Min -> restitution = Math.min(A.restitution, B.restitution);
-            case Max -> restitution = Math.max(A.restitution, B.restitution);
-            case Average -> restitution = (A.restitution + B.restitution) / 2;
-            case Multiply -> restitution = A.restitution * B.restitution;
-            default -> restitution = 0.0f;
-        }
-
+        restitution = MathUtilities.Blend(A.restitution, B.restitution, A.restitutionBlendingMode);
+        friction = MathUtilities.Blend(A.friction, B.friction, A.restitutionBlendingMode);
     }
 
     /**

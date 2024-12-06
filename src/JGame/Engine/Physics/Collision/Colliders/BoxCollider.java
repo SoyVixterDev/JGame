@@ -1,24 +1,15 @@
 package JGame.Engine.Physics.Collision.Colliders;
 
-import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WirecubeRenderer;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
+import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
 import JGame.Engine.Physics.Collision.Contacts.Contact;
-import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
-
-import java.util.List;
-import java.util.Vector;
 
 public class BoxCollider extends Collider
 {
-    /**
-     * Center of the box, in local space
-     */
-    private Vector3D center = Vector3D.Zero;
-
     /**
      * Half size of the box
      */
@@ -28,18 +19,17 @@ public class BoxCollider extends Collider
     {
         return halfSize;
     }
+    public Vector3D GetScaledHalfSize()
+    {
+        return halfSize.Multiply(transform().GetGlobalScale());
+    }
 
     public void SetHalfSize(Vector3D halfSize)
     {
         this.halfSize = halfSize;
         ((WirecubeRenderer)colliderRenderer).SetHalfSize(halfSize);
     }
-
-    public Vector3D GetCenter()
-    {
-        return center;
-    }
-
+    @Override
     public void SetCenter(Vector3D center)
     {
         this.center = center;
@@ -60,25 +50,46 @@ public class BoxCollider extends Collider
     @Override
     public BoundingVolume GetBoundingVolume()
     {
-        Vector3D globalPosition = transform().GetGlobalPosition();
-        Quaternion globalRotation = transform().GetGlobalRotation();
-        Vector3D scaledHalfSize = halfSize.Multiply(transform().GetGlobalScale());
-
-        Vector3D boundHalfSize =  scaledHalfSize.Rotate(globalRotation.ToRotationMatrix().Absolute());
-        Vector3D boundCenter = center.Add(globalPosition);
-
-        return new BoundingBox(boundCenter, boundHalfSize);
+        return new BoundingBox(GetCenterWorld(), GetScaledHalfSize().Rotate(transform().GetGlobalRotation().ToRotationMatrix().Absolute()));
     }
 
     @Override
-    public List<Contact> GetContacts(BoxCollider boxCollider)
+    public boolean CheckPoint(Vector3D point)
     {
-        return List.of();
+        Vector3D scaledHalfSize = GetScaledHalfSize();
+        Vector3D localPoint = transform().WorldToLocalSpace(point);
+
+        return !(Math.abs(localPoint.x) > scaledHalfSize.x ||
+                Math.abs(localPoint.y) > scaledHalfSize.y ||
+                Math.abs(localPoint.z) > scaledHalfSize.z);
     }
 
     @Override
-    public List<Contact> GetContacts(SphereCollider sphereCollider)
+    public Contact GetContactPoint(Vector3D point, Rigidbody source)
     {
-        return List.of();
+        Vector3D scaledHalfSize = GetScaledHalfSize();
+        Vector3D localPoint = transform().WorldToLocalSpace(point);
+
+        float minDepth = scaledHalfSize.x - Math.abs(localPoint.x);
+        if(minDepth < 0) return null;
+        Vector3D normal = transform().Right().Scale(Math.signum(localPoint.x));
+
+        float depth = scaledHalfSize.y - Math.abs(localPoint.y);
+        if(depth < 0) return null;
+        else if (depth < minDepth)
+        {
+            minDepth = depth;
+            normal = transform().Right().Scale(Math.signum(localPoint.y));
+        }
+
+        depth = scaledHalfSize.z - Math.abs(localPoint.z);
+        if(depth < 0) return null;
+        else if (depth < minDepth)
+        {
+            minDepth = depth;
+            normal = transform().Right().Scale(Math.signum(localPoint.z));
+        }
+
+        return new Contact(GetRigidbody(), rigidbody, point, normal, minDepth);
     }
 }

@@ -81,8 +81,16 @@ public final class Settings
          */
         public static final double physicsUpdateInterval = 1f/60f;
         /**
-         * The max number of potential collisions to check during the broad collision detection phase
+         * The max number of potential collisions to check during the broad collision detection phase in a single frame
          */
-        public static final int broadCollisionLimit = 2000;
+        public static final int broadCollisionLimit = 10000;
+        /**
+         * The max number of contacts to generate during the fine collision detection phase in a single frame
+         */
+        public static final int fineCollisionLimit = 5000;
+        /**
+         * The max number of iterations during the contact resolution phase in a single frame
+         */
+        public static final int contactResolutionLimit = 4000;
     }
 }

@@ -5,6 +5,7 @@ import JGame.Engine.Internal.Logger;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
 import JGame.Engine.Physics.Collision.Colliders.Collider;
+import JGame.Engine.Physics.Collision.Contacts.Contact;
 import JGame.Engine.Physics.Collision.Detection.BroadCollisionDetection;
 import JGame.Engine.Physics.ForceGenerators.GlobalAngularDragForceGenerator;
 import JGame.Engine.Physics.ForceGenerators.GlobalGravityForceGenerator;
@@ -17,6 +18,7 @@ import JGame.Engine.Settings;
 import JGame.Engine.Structures.Matrix3x3;
 import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
+import JGame.Engine.Utilities.MathUtilities;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +86,18 @@ public class Rigidbody extends PhysicsObject
      * Defines how much this body bounces in collisions, 0 means no bounciness, 1 means no energy is lost in the collision
      */
     public float restitution = 0.0f;
-
+    /**
+     * Defines how this body's restitution blends with another during collision
+     */
+    public MathUtilities.BlendingMode restitutionBlendingMode = MathUtilities.BlendingMode.Average;
+    /**
+     * Defines how much friction this body has
+     */
+    public float friction = 0.0f;
+    /**
+     * Defines how this body's friction blends with another during collision
+     */
+    public MathUtilities.BlendingMode frictionBlendingMode = MathUtilities.BlendingMode.Average;
     /**
      * Defines the drag coefficients of the object in terms of linear movement
      */
@@ -531,20 +544,53 @@ public class Rigidbody extends PhysicsObject
     }
 
     /**
+     * Gets the list of contacts between this Rigidbody and another
+     * @param other
+     * The other Rigidbody
+     * @param limit
+     * The limit count of contacts to get
+     * @return
+     * The list of contacts between the rigid bodies, or empty if none are found
+     */
+    public List<Contact> GetContacts(Rigidbody other, int limit)
+    {
+        List<Contact> contacts = new ArrayList<>();
+
+        if(other.colliders.isEmpty() || colliders.isEmpty())
+            return contacts;
+
+        for(Collider col : colliders)
+        {
+            for(Collider otherCol : other.colliders)
+            {
+                if(limit <= 0)
+                    return contacts;
+
+                Contact contact = col.GetContact(otherCol, limit);
+                if(contact == null)
+                    continue;
+
+                contacts.add(contact);
+                limit -= 1;
+            }
+        }
+
+        return contacts;
+    }
+
+    /**
      * Gets the bounding volume that encapsulates all colliders assigned to this rigid body
      * @return
      * The bounding volume that encapsulates all colliders assigned to this rigid body
      */
     public BoundingVolume GetBoundingVolume()
     {
-        if(!colliders.isEmpty())
-        {
-            List<BoundingVolume> boundingVolumes = colliders.stream().map(Collider::GetBoundingVolume).toList();
+        if(colliders.isEmpty())
+            return null;
 
-            return BoundingVolume.GenerateFromBounds(boundingVolumes);
-        }
+        List<BoundingVolume> boundingVolumes = colliders.stream().map(Collider::GetBoundingVolume).toList();
 
-        return null;
+        return BoundingVolume.GenerateFromBounds(boundingVolumes);
     }
 
     /**

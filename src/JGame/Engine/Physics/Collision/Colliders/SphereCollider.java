@@ -1,31 +1,31 @@
 package JGame.Engine.Physics.Collision.Colliders;
 
-import JGame.Engine.Basic.JGameObject;
-import JGame.Engine.Graphics.Renderers.WireframeRenderers.WirecubeRenderer;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WiresphereRenderer;
+import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
 import JGame.Engine.Physics.Collision.Contacts.Contact;
 import JGame.Engine.Structures.Vector3D;
 
-import java.util.List;
-
 public class SphereCollider extends Collider
 {
-
     /**
      * Radius of the sphere
      */
     private float radius = 0.5f;
-    /**
-     * Center of the collider, in local space
-     */
-    private Vector3D center = Vector3D.Zero;
 
     public float GetRadius()
     {
         return radius;
+    }
+
+    public float GetScaledRadius()
+    {
+        Vector3D scale = transform().GetGlobalScale();
+        float largestScale = Math.max(Math.max(scale.x, scale.y), scale.z);
+
+        return largestScale * radius;
     }
 
     public void SetRadius(float radius)
@@ -33,12 +33,7 @@ public class SphereCollider extends Collider
         this.radius = radius;
         ((WiresphereRenderer)colliderRenderer).SetRadius(radius);
     }
-
-    public Vector3D GetCenter()
-    {
-        return center;
-    }
-
+    @Override
     public void SetCenter(Vector3D center)
     {
         this.center = center;
@@ -59,24 +54,30 @@ public class SphereCollider extends Collider
     @Override
     public BoundingVolume GetBoundingVolume()
     {
-        Vector3D scale =  transform().GetGlobalScale();
-        float largestScale = Math.max(Math.max(scale.x, scale.y), scale.z);
-
-        Vector3D boundHalfSize =  Vector3D.One.Scale(radius * largestScale);
-        Vector3D boundCenter = center.Add(transform().GetGlobalPosition());
-
-        return new BoundingBox(boundCenter, boundHalfSize);
+        return new BoundingBox(GetCenterWorld(), Vector3D.One.Scale(GetScaledRadius()));
     }
 
     @Override
-    public List<Contact> GetContacts(BoxCollider boxCollider)
+    public boolean CheckPoint(Vector3D point)
     {
-        return List.of();
+        Vector3D localPoint = transform().GetGlobalPosition().Subtract(point);
+        float scaledRadius =  GetScaledRadius();
+
+        return localPoint.SquaredMagnitude() <= scaledRadius * scaledRadius;
     }
 
     @Override
-    public List<Contact> GetContacts(SphereCollider sphereCollider)
+    public Contact GetContactPoint(Vector3D point, Rigidbody source)
     {
-        return List.of();
+        Vector3D globalPos = transform().GetGlobalPosition();
+        Vector3D localPoint = globalPos.Subtract(point);
+        float scaledRadius =  GetScaledRadius();
+        float distanceFromCenter = localPoint.Magnitude();
+
+        float depth = scaledRadius - distanceFromCenter;
+        if(depth < 0) return null;
+        Vector3D normal = distanceFromCenter == 0 ? Vector3D.Up : localPoint.Normalized();
+
+        return new Contact(GetRigidbody(), source, point, normal, depth);
     }
 }

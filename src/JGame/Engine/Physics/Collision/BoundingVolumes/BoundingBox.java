@@ -22,33 +22,6 @@ public class BoundingBox extends BoundingVolume
     }
 
     @Override
-    protected boolean Overlaps(BoundingBox box)
-    {
-        Vector3D minA = Min();
-        Vector3D maxA = Max();
-        Vector3D minB = box.Min();
-        Vector3D maxB = box.Max();
-
-        return (maxA.x >= minB.x && minA.x <= maxB.x) &&
-                (maxA.y >= minB.y && minA.y <= maxB.y) &&
-                (maxA.z >= minB.z && minA.z <= maxB.z);
-    }
-
-    @Override
-    protected boolean Overlaps(BoundingSphere sphere)
-    {
-        Vector3D closestPoint = new Vector3D
-        (
-            Math.max(Min().x, Math.min(sphere.center.x, Max().x)),
-            Math.max(Min().y, Math.min(sphere.center.y, Max().y)),
-            Math.max(Min().z, Math.min(sphere.center.z, Max().z))
-        );
-
-        float distSquared = Vector3D.DistanceSquared(closestPoint, sphere.center);
-        return distSquared <= (sphere.radius * sphere.radius);
-    }
-
-    @Override
     public float GetVolume()
     {
         return (halfSize.x * 2) * (halfSize.y * 2) * (halfSize.z * 2);

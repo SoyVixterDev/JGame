@@ -305,6 +305,27 @@ public class Vector2D
     }
 
 
+    /**
+     * Returns true if there's a NaN component in the vector
+     * @return
+     * true if there's a NaN component in the vector
+     */
+    public boolean IsNaN()
+    {
+        return (Float.isNaN(x)) || (Float.isNaN(y));
+    }
+
+    /**
+     * Returns true if all components of the vector are zero
+     * @return
+     * True if all components of the vector are zero
+     */
+    public boolean IsZero()
+    {
+        return this.equals(Zero);
+    }
+
+
     //Factory Variables
 
     /**
@@ -346,6 +367,11 @@ public class Vector2D
      * Vector2D with all components being Negative Infinity
      */
     public static final Vector2D NegativeInfinity = new Vector2D(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY);
+
+    public float[] ToArray()
+    {
+        return new float[]{x, y};
+    }
 
     @Override
     public String toString()

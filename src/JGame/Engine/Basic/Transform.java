@@ -352,62 +352,85 @@ public class Transform extends BaseObject
     {
         return transformationMatrix.Multiply(point);
     }
+    public Vector3D WorldToLocalSpace(Vector3D point)
+    {
+        return transformationMatrix.Inverse().Multiply(point);
+    }
 
     //------Direction functions------
 
     /**
-     * Returns a Vector representing the relative Up Vector for this object
-     * @return
-     * Vector representing the relative Up Vector for this object
+     * Returns the relative Up Vector for this object.
      */
     public Vector3D Up()
     {
-        return Vector3D.Up.Rotate(globalRotation);
+        return new Vector3D(
+                transformationMatrix.values[1],
+                transformationMatrix.values[5],
+                transformationMatrix.values[9]
+        );
     }
+
     /**
-     * Returns a Vector representing the relative Down Vector for this object
-     * @return
-     * Vector representing the relative Down Vector for this object
+     * Returns the relative Down Vector for this object.
      */
     public Vector3D Down()
     {
-        return Vector3D.Down.Rotate(globalRotation);
+        return Up().Negate();
     }
+
     /**
-     * Returns a Vector representing the relative Forward Vector for this object
-     * @return
-     * Vector representing the relative Forward Vector for this object
+     * Returns the relative Forward Vector for this object.
      */
     public Vector3D Forward()
     {
-        return Vector3D.Forward.Rotate(globalRotation);
+        return new Vector3D(
+                transformationMatrix.values[2],
+                transformationMatrix.values[6],
+                transformationMatrix.values[10]
+        );
     }
+
     /**
-     * Returns a Vector representing the relative Backward Vector for this object
-     * @return
-     * Vector representing the relative Backward Vector for this object
+     * Returns the relative Backward Vector for this object.
      */
     public Vector3D Backward()
     {
-        return Vector3D.Backward.Rotate(globalRotation);
+        return Forward().Negate();
     }
+
     /**
-     * Returns a Vector representing the relative Right Vector for this object
-     * @return
-     * Vector representing the relative Right Vector for this object
+     * Returns the relative Right Vector for this object.
      */
     public Vector3D Right()
     {
-        return Vector3D.Right.Rotate(globalRotation);
+        return new Vector3D(
+                transformationMatrix.values[0],
+                transformationMatrix.values[4],
+                transformationMatrix.values[8]
+        );
     }
+
     /**
-     * Returns a Vector representing the relative Left Vector for this object
-     * @return
-     * Vector representing the relative Left Vector for this object
+     * Returns the relative Left Vector for this object.
      */
     public Vector3D Left()
     {
-        return Vector3D.Left.Rotate(globalRotation);
+        return Right().Negate();
     }
 
+    /**
+     * Gets the X,Y or Z axis from an integer index
+     * @param index
+     * Which axis to get, in order
+     * @return
+     * The selected axis
+     */
+    public Vector3D GetAxis(int index)
+    {
+        if(index == 0) return Right();
+        if(index == 1) return Up();
+        if(index == 2) return Forward();
+        throw new IllegalArgumentException("Invalid axis index! Use 0, 1, and 2");
+    }
 }

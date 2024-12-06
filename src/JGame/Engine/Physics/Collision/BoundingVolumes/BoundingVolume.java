@@ -1,6 +1,7 @@
 package JGame.Engine.Physics.Collision.BoundingVolumes;
 
 import JGame.Engine.Internal.Logger;
+import JGame.Engine.Physics.Collision.Helper.BoundingVolumeHelper;
 import JGame.Engine.Structures.Vector3D;
 
 import java.util.Arrays;
@@ -19,24 +20,35 @@ public abstract class BoundingVolume
 
     /**
      * Checks if the Volume is overlapping with another
-     * @param volume
+     * @param other
      * The other volume
      * @return
      * True if the volumes are overlapping
      */
-    public final boolean Overlaps(BoundingVolume volume)
+    @SuppressWarnings("JavaReflectionMemberAccess")
+    public final boolean Overlaps(BoundingVolume other)
     {
-        if(volume instanceof BoundingBox box)
+        try
         {
-            return Overlaps(box);
+            try
+            {
+                var method = BoundingVolumeHelper.class.getMethod("Overlaps", this.getClass(), other.getClass());
+                return (Boolean) method.invoke(null, this, other);
+            }
+            catch(NoSuchMethodException e1)
+            {
+                var method = BoundingVolumeHelper.class.getMethod("Overlaps", other.getClass(), this.getClass());
+                return (Boolean) method.invoke(null, other, this);
+            }
         }
-        else if(volume instanceof BoundingSphere sphere)
+        catch (NoSuchMethodException e)
         {
-            return Overlaps(sphere);
+            throw new IllegalArgumentException("Invalid Collider type! Add the appropriate GetContacts method to this class. Type: " + other.getClass().getName(), e);
         }
-
-        Logger.DebugWarning("Bounding Volume type \"" + volume.getClass().getName() + "\" not recognized!");
-        return false;
+        catch (Exception e)
+        {
+            throw new RuntimeException("An error occurred while getting contacts with collider type: " + other.getClass().getName(), e);
+        }
     }
 
 
@@ -215,8 +227,6 @@ public abstract class BoundingVolume
         return new BoundingSphere(center, radius);
     }
 
-    protected abstract boolean Overlaps(BoundingBox box);
-    protected abstract boolean Overlaps(BoundingSphere sphere);
     public abstract float GetVolume();
     public abstract float GetGrowth(BoundingVolume volume);
     public Vector3D GetCenter() { return center; }
