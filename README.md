@@ -69,7 +69,7 @@ The other sections do not guarantee the same behavior, as they are called right 
    1. Start
    2. Every Frame:
       1. Early Update
-      2. Physics Update
+      2. Physics Update (runs around 60 times per second, regardless of framerate)
       3. Rendering
       4. Update
       5. Late Update
