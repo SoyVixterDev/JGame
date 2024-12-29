@@ -66,10 +66,10 @@ The other sections do not guarantee the same behavior, as they are called right 
     2. OnDestroy
     3. Delete the object
 4. In Engine Loop
-   1. Start
+   1. Start (Called only once)
    2. Every Frame:
       1. Early Update
       2. Physics Update (runs around 60 times per second, regardless of framerate)
-      3. Rendering
       4. Update
-      5. Late Update
+      5. Rendering
+      6. Late Update
