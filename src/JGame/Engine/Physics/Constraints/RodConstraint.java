@@ -1,6 +1,6 @@
 package JGame.Engine.Physics.Constraints;
 
-import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
 import JGame.Engine.Structures.Vector3D;
 
 public class RodConstraint extends LinkConstraint
@@ -20,8 +20,8 @@ public class RodConstraint extends LinkConstraint
         if(currentLength == length)
            return 0;
 
-        contacts[0].rigidbodies[0] = rigidbodies[0];
-        contacts[0].rigidbodies[1] = rigidbodies[1];
+        contacts[0].bodies[0] = rigidbodies[0];
+        contacts[0].bodies[1] = rigidbodies[1];
 
         Vector3D normal = rigidbodies[1].transform().GetGlobalPosition().Subtract(rigidbodies[0].transform().GetGlobalPosition()).Normalized();
 

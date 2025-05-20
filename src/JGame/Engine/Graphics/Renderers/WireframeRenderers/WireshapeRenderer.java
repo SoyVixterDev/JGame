@@ -9,7 +9,7 @@ import static org.lwjgl.opengl.GL46.*;
 
 public abstract class WireshapeRenderer extends Renderer
 {
-    public float lineWidth = 2.0f;
+    public float lineWidth = 4.0f;
     private final Shader shader = new Shader
     (
             "/Shaders/Internal/Wireframe/wireframeVertShader.glsl",

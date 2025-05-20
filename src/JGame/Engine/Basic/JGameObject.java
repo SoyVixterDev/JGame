@@ -1,11 +1,10 @@
 package JGame.Engine.Basic;
 
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.stream.Collectors;
 
 /**
  * JGameObject that can be instantiated in the world, you can add your own JComponents,
@@ -16,10 +15,18 @@ public class JGameObject extends BaseObject
     public final static ArrayList<JGameObject> allObjects = new ArrayList<>();
 
     public String name;
-    private Transform transform = new Transform(this);
-    ArrayList<JComponent> JComponents = new ArrayList<>();
+    private Transform transform = BaseObject.CreateInstance(Transform.class);
+    final ArrayList<JComponent> JComponents = new ArrayList<>();
 
-    //----- Debug Callbacks -----
+
+
+    //----- Callbacks -----
+
+    @Override
+    protected void Initialize()
+    {
+        transform.SetGameObject(this);
+    }
 
     /**
      * Destroys the object, its JComponents and recursively does the same for all its children
@@ -32,7 +39,8 @@ public class JGameObject extends BaseObject
 
         for(Transform child : transform.GetChildren())
         {
-            child.object().Destroy();
+            if(child.object() != null)
+                child.object().Destroy();
         }
 
         JComponent[] comps = new JComponent[JComponents.size()];
@@ -54,6 +62,20 @@ public class JGameObject extends BaseObject
         allObjects.remove(this);
     }
 
+    /**
+     * Destroys all current objects
+     */
+    public static void DestroyAll()
+    {
+        JGameObject[] objs = new JGameObject[allObjects.size()];
+        allObjects.toArray(objs);
+
+        for(var obj : objs)
+        {
+            obj.Destroy();
+        }
+    }
+
     //------ Other Functions -------
 
     /**
@@ -66,7 +88,7 @@ public class JGameObject extends BaseObject
     @SafeVarargs
     public static JGameObject Create(String name, Class<? extends JComponent>... components)
     {
-        return Create(name, Vector3D.Zero, Quaternion.Identity, Vector3D.One, components);
+        return Create(name, Vector3D.Zero, Quaternion.Identity, Vector3D.One, null, components);
     }
 
     /**
@@ -81,7 +103,7 @@ public class JGameObject extends BaseObject
     @SafeVarargs
     public static JGameObject Create(String name, Vector3D position, Class<? extends JComponent>... components)
     {
-        return Create(name, position, Quaternion.Identity, components);
+        return Create(name, position, Quaternion.Identity, Vector3D.One, null, components);
     }
 
 
@@ -99,7 +121,7 @@ public class JGameObject extends BaseObject
     @SafeVarargs
     public static JGameObject Create(String name, Vector3D position, Quaternion rotation, Class<? extends JComponent>... components)
     {
-        return Create(name, position, rotation, Vector3D.One, components);
+        return Create(name, position, rotation, Vector3D.One, null, components);
     }
 
     /**
@@ -136,6 +158,40 @@ public class JGameObject extends BaseObject
      * @return
      * The instantiated object
      */
+    public static JGameObject Create(String name, Vector3D position, Quaternion rotation, Vector3D scale, Transform parent, ArrayList<JComponent> components)
+    {
+        JGameObject newObject = BaseObject.CreateInstance(JGameObject.class);
+        allObjects.add(newObject);
+
+        newObject.name = name;
+        newObject.transform().SetGlobalPosition(position);
+        newObject.transform().SetGlobalRotation(rotation);
+        newObject.transform().SetGlobalScale(scale);
+        newObject.transform().SetParent(parent);
+
+        for(JComponent _class : components)
+        {
+            newObject.CopyAddComponent(_class);
+        }
+
+        return newObject;
+    }
+
+    /**
+     * Creates a JGameObject with the selected parameters
+     * @param position
+     * Position where to instantiate the object
+     * @param rotation
+     * Rotation to apply to the instantiated object
+     * @param scale
+     * Scale to apply to the instantiated object
+     * @param parent
+     * The parent of the object
+     * @param components
+     * The components to add after instantiation
+     * @return
+     * The instantiated object
+     */
     @SafeVarargs
     public static JGameObject Create(String name, Vector3D position, Quaternion rotation, Vector3D scale, Transform parent, Class<? extends JComponent>... components)
     {
@@ -155,6 +211,17 @@ public class JGameObject extends BaseObject
 
         return newObject;
     }
+
+    /**
+     * Duplicates and returns the JGameObject
+     * @return
+     * The duplicated object
+     */
+    public JGameObject Duplicate()
+    {
+        return Create(name + " (Copy)", transform().GetGlobalPosition(), transform().GetGlobalRotation(), transform().GetGlobalScale(), transform().GetParent(), JComponents);
+    }
+
     /**
      * Adds components to the JGameObject
      * @param types
@@ -190,12 +257,51 @@ public class JGameObject extends BaseObject
         JComponents.add(comp);
         return comp;
     }
-
+    /**
+     * Duplicates and adds a component to the JGameObject of type
+     * @param component
+     * The component to be duplicated and added
+     * @return
+     * The component that's been added to the Object
+     */
+    public JComponent CopyAddComponent(JComponent component)
+    {
+        JComponent comp = JComponent.DuplicateComponent(component, this);
+        JComponents.add(comp);
+        return comp;
+    }
     //------ Getter Functions ------
 
     public Transform transform()
     {
         return transform;
+    }
+
+
+    /**
+     * Gets the first JComponent of type associated with the object or one of its children
+     * @param type
+     * The type of the JComponent to get
+     * @return
+     * The component or null if it didn't any
+     * @param <C>
+     * The type of the JComponent
+     */
+    public <C extends JComponent> C GetComponentInChildren(Class<C> type)
+    {
+        C comp = GetComponent(type);
+        if(comp != null)
+            return comp;
+
+
+        for(Transform child : transform().GetChildren())
+        {
+            comp = child.object().GetComponentInChildren(type);
+            if(comp != null)
+                return comp;
+        }
+
+        return null;
     }
     /**
      * Gets the first JComponent of Type associated with the object
@@ -230,31 +336,53 @@ public class JGameObject extends BaseObject
             if(comp != null)
                 return comp;
 
-            current = transform.GetParent();
+            current = current.GetParent();
         } while(current != null);
 
         return null;
+    }
+    /**
+     * Gets all the JComponents of Type associated to this object or its children as an array list
+     * @param type
+     * The type of the JComponents to get
+     * @return
+     * The array list containing all Components of Type, empty if none were found
+     * @param <C>
+     * The type of the JComponents
+     */
+    public <C extends JComponent> ArrayList<C> GetComponentsInChildren(Class<C> type)
+    {
+        ArrayList<C> allcomps = new ArrayList<>(GetComponents(type));
+
+        for(Transform child : transform().GetChildren())
+        {
+            allcomps.addAll(child.object().GetComponentsInChildren(type));
+        }
+
+        return allcomps;
     }
     /**
      * Gets all the JComponents of Type associated to this object as an array list
      * @param type
      * The type of the JComponents to get
      * @return
-     * The array list containing all Components of Type or null if it didn't find any
+     * The array list containing all Components of Type, empty if none were found
      * @param <C>
      * The type of the JComponents
      */
     public <C extends JComponent> ArrayList<C> GetComponents(Class<C> type)
     {
-        ArrayList<C> arrayList = new ArrayList<>((Collection<? extends C>) JComponents.stream().filter(type::isInstance));
-        return arrayList.isEmpty() ? null : arrayList;
+        return JComponents.stream()
+                .filter(type::isInstance)
+                .map(type::cast)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
     /**
      * Gets the first component of type associated with the object or one of its parents
      * @param type
      * The type of the JComponents to get
      * @return
-     * The array list containing all Components of Type or null if it didn't find any
+     * The array list containing all Components of Type, empty if none are found
      * @param <C>
      * The type of the JComponents
      */
@@ -270,7 +398,7 @@ public class JGameObject extends BaseObject
             current = transform.GetParent();
         } while(current != null);
 
-        return allcomps.isEmpty() ? null : allcomps;
+        return allcomps;
     }
     /**
      * Called when closing the application, destroys all objects
@@ -293,6 +421,10 @@ public class JGameObject extends BaseObject
     @Override
     public String toString()
     {
-        return name + " (" + super.toString() + ")";
+        String hashCode = Integer.toHexString(System.identityHashCode(this)); // Converts the identity hash code to hex
+
+        String result = "@" + hashCode;
+
+        return name + result;
     }
 }

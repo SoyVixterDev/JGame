@@ -5,7 +5,7 @@ import JGame.Engine.Internal.Logger;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
 import JGame.Engine.Physics.Collision.Colliders.Collider;
-import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
 import JGame.Engine.Physics.Collision.Detection.BroadCollisionDetection;
 import JGame.Engine.Physics.ForceGenerators.GlobalAngularDragForceGenerator;
 import JGame.Engine.Physics.ForceGenerators.GlobalGravityForceGenerator;
@@ -14,11 +14,12 @@ import JGame.Engine.Physics.General.ForceRegistration;
 import JGame.Engine.Physics.General.Physics;
 import JGame.Engine.Physics.General.PhysicsObject;
 import JGame.Engine.Physics.Interfaces.IForceGenerator;
-import JGame.Engine.Settings;
+import JGame.Engine.Physics.Raycast.RaycastContact;
 import JGame.Engine.Structures.Matrix3x3;
 import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector3D;
 import JGame.Engine.Utilities.MathUtilities;
+import org.lwjgl.system.linux.Stat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,25 +68,17 @@ public class Rigidbody extends PhysicsObject
 
     private final Matrix3x3 worldSpaceInverseInertiaTensor = new Matrix3x3();
 
-    public BodyType bodyType = BodyType.Dynamic;
-
-    public boolean interpolate = true;
-    /**
-     * Real position where the object wants to be, used by the interpolation
-     */
-    protected Vector3D targetPosition;
-    /**
-     * Real orientation of the object, used by the interpolation
-     */
-    protected Quaternion targetRotation;
+    private BodyType bodyType = BodyType.Dynamic;
 
     public boolean useGravity = true;
     public float gravityScale = 1.0f;
 
+    public String tag = "Default";
+
     /**
      * Defines how much this body bounces in collisions, 0 means no bounciness, 1 means no energy is lost in the collision
      */
-    public float restitution = 0.0f;
+    public float restitution = 0.6f;
     /**
      * Defines how this body's restitution blends with another during collision
      */
@@ -101,11 +94,11 @@ public class Rigidbody extends PhysicsObject
     /**
      * Defines the drag coefficients of the object in terms of linear movement
      */
-    public Physics.DragCoefficients linearDragCoefficients = new Physics.DragCoefficients(0.00025f, 0.00001f);
+    public Physics.DragCoefficients linearDragCoefficients = new Physics.DragCoefficients(0.1f, 0.02f);
     /**
      * Defines the drag coefficients of the object in terms of rotation
      */
-    public Physics.DragCoefficients angularDragCoefficients = new Physics.DragCoefficients(0.002f, 0.00001f);
+    public Physics.DragCoefficients angularDragCoefficients = new Physics.DragCoefficients(0.2f, 0.05f);
 
     /**
      * Defines the constrained axes in terms of linear movement
@@ -118,10 +111,10 @@ public class Rigidbody extends PhysicsObject
 
     //-Velocities & Accelerations-
 
-    public Vector3D linearVelocity = Vector3D.Zero;
+    protected Vector3D linearVelocity = Vector3D.Zero;
     protected Vector3D linearAcceleration = Vector3D.Zero;
 
-    public Vector3D angularVelocity = Vector3D.Zero;
+    protected Vector3D angularVelocity = Vector3D.Zero;
     protected Vector3D angularAcceleration = Vector3D.Zero;
 
     //-Accumulators-
@@ -158,8 +151,11 @@ public class Rigidbody extends PhysicsObject
     {
         RegisterConstantForces();
 
-        targetPosition = transform().GetGlobalPosition();
-        targetRotation = transform().GetGlobalRotation();
+        for(Collider collider : object().GetComponentsInChildren(Collider.class))
+        {
+            collider.SetRigidbody(this);
+            AddCollider(collider, true);
+        }
 
         CalculateInverseInertiaTensor();
     }
@@ -169,7 +165,7 @@ public class Rigidbody extends PhysicsObject
     {
         super.OnEnable();
         transform().OnChangeRotation.Subscribe(updateWorldSpaceInertiaTensor);
-        transform().OnChangePosition.Subscribe(updateInBVHTree);
+        transform().OnChangeTransformation.Subscribe(updateInBVHTree);
 
         BroadCollisionDetection.BVHTree.Insert(this);
     }
@@ -179,7 +175,7 @@ public class Rigidbody extends PhysicsObject
     {
         super.OnDisable();
         transform().OnChangeRotation.Unsubscribe(updateWorldSpaceInertiaTensor);
-        transform().OnChangePosition.Unsubscribe(updateInBVHTree);
+        transform().OnChangeTransformation.Unsubscribe(updateInBVHTree);
 
         BroadCollisionDetection.BVHTree.Remove(this);
     }
@@ -200,13 +196,6 @@ public class Rigidbody extends PhysicsObject
 
         Integrate();
     }
-
-    @Override
-    public void Update()
-    {
-        if (interpolate) Interpolate();
-    }
-
     //------Integration & Interpolation------
 
     /**
@@ -216,12 +205,6 @@ public class Rigidbody extends PhysicsObject
     {
         LinearIntegration();
         AngularIntegration();
-
-        if (!interpolate)
-        {
-            transform().SetGlobalPosition(targetPosition);
-            transform().SetGlobalRotation(targetRotation);
-        }
 
         ClearAccumulators();
     }
@@ -235,11 +218,13 @@ public class Rigidbody extends PhysicsObject
 
         //V = Vo + a * t, t = PhysicsDeltaTime
         linearVelocity = linearVelocity.AddScaledVector(linearAcceleration,
-                (float) Settings.Physics.physicsUpdateInterval * Time.timeScale);
+                (float) Time.PhysicsDeltaTime() * Time.timeScale);
 
         //d = do + V * t, t = PhysicsDeltaTime
-        targetPosition = targetPosition.AddScaledVector(linearVelocity.Multiply(movementConstraints.AsVector()),
-                (float)  Settings.Physics.physicsUpdateInterval * Time.timeScale);
+        Vector3D deltaPos = linearVelocity.Multiply(movementConstraints.AsVector()).Scale((float)  Time.PhysicsDeltaTime() * Time.timeScale);
+
+
+        transform().PositionAdd(deltaPos);
     }
 
     /**
@@ -251,26 +236,12 @@ public class Rigidbody extends PhysicsObject
 
         //V = Vo + a * t, t = PhysicsDeltaTime
         angularVelocity = angularVelocity.AddScaledVector(angularAcceleration,
-                (float)  Settings.Physics.physicsUpdateInterval * Time.timeScale);
+                (float)  Time.PhysicsDeltaTime() * Time.timeScale);
 
         //q = qo + V * t, t = PhysicsDeltaTime
-        targetRotation = targetRotation.AddScaledVector(angularVelocity.Multiply(rotationConstraints.AsVector()),
-                (float)  Settings.Physics.physicsUpdateInterval * Time.timeScale);
-    }
+        Vector3D delta = angularVelocity.Multiply(rotationConstraints.AsVector()).Scale((float)  Time.PhysicsDeltaTime() * Time.timeScale);
 
-    /**
-     * Interpolates between the current position and the target position calculated during the last physics update
-     */
-    protected void Interpolate()
-    {
-        float interpolationFactor = (float) (Time.DeltaTime() / Settings.Physics.physicsUpdateInterval);
-        interpolationFactor = Math.min(interpolationFactor, 1.0f);
-
-        Vector3D newPos = Vector3D.Lerp(transform().GetGlobalPosition(), targetPosition, interpolationFactor);
-        transform().SetGlobalPosition(newPos);
-
-        Quaternion newRotation = Quaternion.Lerp(transform().GetGlobalRotation(), targetRotation, interpolationFactor);
-        transform().SetGlobalRotation(newRotation);
+        transform().RotationAdd(delta);
     }
 
     /**
@@ -297,7 +268,6 @@ public class Rigidbody extends PhysicsObject
 
     /**
      * Adds a force to the object at the center of mass
-     *
      * @param force     The force to be added
      * @param forceType The type of force to add
      */
@@ -328,7 +298,7 @@ public class Rigidbody extends PhysicsObject
 
         if (forceType == ForceType.Force)
         {
-            torqueAccum = forceAccum.Add(torque);
+            torqueAccum = torqueAccum.Add(torque);
         }
         else if (forceType == ForceType.Impulse)
         {
@@ -369,8 +339,7 @@ public class Rigidbody extends PhysicsObject
         if(localCoordinates)
             point = transform().LocalToWorldSpace(point);
 
-        point = point.Subtract(targetPosition);
-
+        point = point.Subtract(transform().GetGlobalPosition());
         if(forceType == ForceType.Impulse)
         {
             linearVelocity = linearVelocity.Add(force.Scale(inverseMass));
@@ -403,6 +372,8 @@ public class Rigidbody extends PhysicsObject
         {
             Logger.DebugWarning("Mass can't be zero! Skipping mass assignment");
         }
+
+        CalculateInverseInertiaTensor();
     }
 
     public float GetMass()
@@ -411,7 +382,7 @@ public class Rigidbody extends PhysicsObject
     }
     public float GetInverseMass()
     {
-        return inverseMass;
+        return bodyType == BodyType.Static ? 0 : inverseMass;
     }
 
     /**
@@ -424,12 +395,60 @@ public class Rigidbody extends PhysicsObject
         inverseInertiaTensor = inertiaTensor.Inverse();
     }
 
+    /**
+     * Gets the world space inverse inertia tensor
+     */
+    public Matrix3x3 GetInverseInertiaTensorWorld()
+    {
+        return bodyType == BodyType.Static ? Matrix3x3.Zero() : worldSpaceInverseInertiaTensor;
+    }
+
+    public Vector3D GetLinearVelocity()
+    {
+        return linearVelocity;
+    }
+    public void SetLinearVelocity(Vector3D linearVelocity)
+    {
+        if(bodyType == BodyType.Static)
+            return;
+
+        this.linearVelocity = linearVelocity;
+    }
+    public Vector3D GetAngularVelocity()
+    {
+        return angularVelocity;
+    }
+    public void SetAngularVelocity(Vector3D angularVelocity)
+    {
+        if(bodyType == BodyType.Static)
+            return;
+
+        this.angularVelocity = angularVelocity;
+    }
+
     public Vector3D GetLinearAcceleration()
     {
         return linearAcceleration;
     }
     public Vector3D GetAngularAcceleration() { return angularAcceleration; }
 
+
+    public void SetBodyType(BodyType bodyType)
+    {
+        if(this.bodyType == bodyType)
+            return;
+
+        this.bodyType = bodyType;
+
+        linearVelocity = Vector3D.Zero;
+        angularVelocity = Vector3D.Zero;
+
+        ClearAccumulators();
+    }
+    public BodyType GetBodyType()
+    {
+        return bodyType;
+    }
 
     //------Miscellaneous functions------
 
@@ -530,8 +549,21 @@ public class Rigidbody extends PhysicsObject
      */
     public void AddCollider(Collider collider)
     {
+        AddCollider(collider, false);
+    }
+
+    /**
+     * Adds a collider to the list of the colliders for this rigidbody
+     * @param collider
+     * The collider to add
+     * @param ignoreUpdate
+     * Should it ignore updating in the BVH?
+     */
+    public void AddCollider(Collider collider, boolean ignoreUpdate)
+    {
         colliders.add(collider);
-        UpdateInHierarchy();
+        if(!ignoreUpdate)
+            UpdateInHierarchy();
     }
 
     /**
@@ -566,16 +598,58 @@ public class Rigidbody extends PhysicsObject
                 if(limit <= 0)
                     return contacts;
 
-                Contact contact = col.GetContact(otherCol, limit);
+                Contact contact = col.GetContact(otherCol);
                 if(contact == null)
                     continue;
-
                 contacts.add(contact);
                 limit -= 1;
             }
         }
 
         return contacts;
+    }
+
+    /**
+     * Casts a ray
+     * @param origin
+     * The origin
+     * @param direction
+     * The direction
+     * @param maxDistance
+     * The max distance
+     * @return
+     * The contact, or null if none are found
+     */
+    public RaycastContact Raycast(Vector3D origin, Vector3D direction,float maxDistance, String... ignoreTags)
+    {
+        for (String ignoredTag : ignoreTags)
+        {
+            if (ignoredTag.equals(tag))
+            {
+                return null;
+            }
+        }
+
+        float minSquaredDist = Float.MAX_VALUE;
+        RaycastContact bestContact = null;
+
+        for(Collider collider : colliders)
+        {
+            RaycastContact contact = collider.Raycast(origin, direction, maxDistance);
+
+            if(contact == null)
+                continue;
+
+            float squaredDist = Vector3D.DistanceSquared(contact.point, origin);
+
+            if(minSquaredDist > squaredDist)
+            {
+                minSquaredDist = squaredDist;
+                bestContact = contact;
+            }
+        }
+
+        return bestContact;
     }
 
     /**

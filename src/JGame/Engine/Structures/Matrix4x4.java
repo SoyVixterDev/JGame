@@ -258,6 +258,30 @@ public class Matrix4x4
     }
 
     /**
+     * Performs multiplication with a 4D Vector
+     * @param vec
+     * 4D Vector
+     * @return
+     * The multiplied result
+     */
+    public float[] Multiply(float[] vec)
+    {
+        if (vec.length != 4)
+        {
+            throw new IllegalArgumentException("Input vector must have 4 components.");
+        }
+
+        float[] result = new float[4];
+        for (int row = 0; row < 4; row++)
+        {
+            result[row] = values[row * 4 + 0] * vec[0] +
+                    values[row * 4 + 1] * vec[1] +
+                    values[row * 4 + 2] * vec[2] +
+                    values[row * 4 + 3] * vec[3];
+        }
+        return result;
+    }
+    /**
      * Multiplies two matrices
      * @param a
      * Matrix a

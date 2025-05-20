@@ -42,26 +42,27 @@ public class BillboardRenderer extends Renderer
         ST_Mat.values[7] = T_Mat.values[7];
         ST_Mat.values[11] = T_Mat.values[11];
 
+        ST_Mat.values[0] = T_Mat.values[0];
+        ST_Mat.values[5] = T_Mat.values[5];
+        ST_Mat.values[10] = T_Mat.values[10];
+
         ST_Mat.values[15] = T_Mat.values[15];
 
-        ST_Mat.values[12] = T_Mat.values[12];
-        ST_Mat.values[13] = T_Mat.values[13];
-        ST_Mat.values[14] = T_Mat.values[14];
-
-        shader.UpdateShaderMatrices
-        (
+        shader.UpdateShaderMatrices(
                 ST_Mat,
                 null,
                 Camera.GetViewMatrix(),
                 Camera.GetProjectionMatrix()
         );
 
+        shader.SetUniformProperty("viewPosition", Camera.Main.transform().GetGlobalPosition(), true);
+
         glBindVertexArray(mesh.VAO);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(2);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[Mesh.IBO]);
 
-        if(isBackfaceCullingEnabled)
+        if (isBackfaceCullingEnabled)
         {
             glDisable(GL_CULL_FACE);
             isBackfaceCullingEnabled = false;
@@ -74,8 +75,8 @@ public class BillboardRenderer extends Renderer
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(2);
         glBindVertexArray(0);
-
     }
+
 
     /**
      * Sets the image displayed by the billboard

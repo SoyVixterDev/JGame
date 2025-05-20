@@ -1,5 +1,8 @@
 package JGame.Engine.Internal;
 
+import JGame.Engine.Settings;
+import jdk.jfr.Unsigned;
+
 /**
  * Class used to obtain information and handle time related information
  */
@@ -22,6 +25,9 @@ public class Time
     private static double deltaTime = 0;
     private static double physicsDeltaTime = 0;
 
+    @Unsigned
+    private static long frame = 0;
+
     public static void Initialize()
     {
         lastFrameTime = Current();
@@ -33,6 +39,7 @@ public class Time
      */
     public static void UpdateTime()
     {
+        frame++;
         double currentTime = Current();
         deltaTime = Math.max(currentTime - lastFrameTime, Double.MIN_VALUE);
 
@@ -76,6 +83,11 @@ public class Time
         avgFramerate = 1f/Math.max(avgDeltaTime, Double.MIN_VALUE);
     }
 
+    /**
+     * Gets the amount of frames from the start of the application
+     * @return The amount of frames from the start of the application
+     */
+    public static long Frame() { return frame; }
 
     /**
      * Gets the time in seconds between the last and current frame
@@ -88,14 +100,25 @@ public class Time
     }
 
     /**
-     * Gets the time in seconds between the last and current physics update, should be mostly a constant
+     * Gets the interval between physics updates
      * @return
-     * The time between the last and current physics update, in seconds
+     * The interval between physics updates
      */
     public static double PhysicsDeltaTime()
     {
+        return Settings.Physics.physicsUpdateInterval;
+    }
+
+    /**
+     * Gets the exact time between the last and current physics updates, should only be used for debug, physics calculations expect PhysicsDeltaTime
+     * @return
+     * The time between the last and current physics updates, in seconds
+     */
+    public static double ExactPhysicsDeltaTime()
+    {
         return physicsDeltaTime;
     }
+
 
     /**
      * Returns the current time in seconds

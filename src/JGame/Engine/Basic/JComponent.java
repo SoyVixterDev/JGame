@@ -3,9 +3,12 @@ package JGame.Engine.Basic;
 import JGame.Engine.Graphics.Renderers.BillboardRenderer;
 import JGame.Engine.Graphics.Textures.Texture;
 import JGame.Engine.EventSystem.Event1P;
+import JGame.Engine.Internal.Logger;
 import JGame.Engine.Settings;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
 /**
@@ -60,6 +63,67 @@ public abstract class JComponent extends BaseObject
             throw new RuntimeException("Failed to create component for " + type.getName() + ". Ensure it extends JComponent and has a valid constructor.", e);
         }
     }
+
+    /**
+     * Creates a duplicate of the given JComponent and binds it to the specified JGameObject.
+     * @param original
+     * The original JComponent to duplicate.
+     * @param object
+     * The JGameObject to which the duplicate is attached.
+     * @param <T>
+     * The type of the JComponent.
+     * @return The duplicated JComponent.
+     */
+    public static <T extends JComponent> T DuplicateComponent(T original, JGameObject object)
+    {
+        try
+        {
+            // Create a new instance of the same type as the original
+            Class<T> type = (Class<T>) original.getClass();
+            Constructor<T> constructor = type.getConstructor();
+            constructor.setAccessible(true);
+
+            T duplicate = constructor.newInstance();
+            ((JComponent)duplicate).InitializeComponent(object);
+
+            duplicate._internalInitialize();
+            duplicate.OnEnable();
+
+
+            Class<?> currentClass = type;
+            while (currentClass != null)
+            {
+                Field[] fields = currentClass.getDeclaredFields();
+                for (Field field : fields)
+                {
+                    int modifiers = field.getModifiers();
+                    if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers))
+                    {
+                        continue;
+                    }
+
+                    field.setAccessible(true);
+                    try
+                    {
+                        Object fieldValue = field.get(original);
+                        field.set(duplicate, fieldValue);
+                    }
+                    catch (IllegalAccessException e)
+                    {
+                        Logger.DebugStackTraceError("Failed to copy field: " + field.getName(), e);
+                    }
+                }
+                currentClass = currentClass.getSuperclass();
+            }
+
+            return duplicate;
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Failed to duplicate component of type " + original.getClass().getName(), e);
+        }
+    }
+
 
     private void InitializeComponent(JGameObject object)
     {
@@ -142,5 +206,11 @@ public abstract class JComponent extends BaseObject
     public Transform transform()
     {
         return transform;
+    }
+
+    @Override
+    public String toString()
+    {
+        return getClass().getSimpleName() + " (" + object.toString() + ")";
     }
 }

@@ -1,8 +1,9 @@
 package JGame.Engine.Physics.Collision.Detection;
 
-import JGame.Engine.Physics.Collision.Contacts.Contact;
-import JGame.Engine.Physics.Collision.Contacts.ContactResolver;
-import JGame.Engine.Physics.Collision.Contacts.PotentialContact;
+import JGame.Engine.Internal.Logger;
+import JGame.Engine.Physics.Collision.Contact.Contact;
+import JGame.Engine.Physics.Collision.Contact.ContactResolver;
+import JGame.Engine.Physics.Collision.Contact.PotentialContact;
 
 import java.util.List;
 
@@ -17,7 +18,9 @@ public class CollisionPipeline
     public static void RunPipeline()
     {
         List<PotentialContact> potentialContacts = BroadCollisionDetection.GetPotentialContacts();
+
         List<Contact> contacts = FineCollisionDetection.GetContacts(potentialContacts);
+
         ContactResolver.ResolveContacts(contacts);
     }
 }

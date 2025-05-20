@@ -5,6 +5,7 @@ import JGame.Engine.Graphics.Textures.BaseTexture;
 import JGame.Engine.Graphics.Textures.Texture;
 import JGame.Engine.Structures.*;
 import JGame.Engine.Utilities.FileUtilities;
+import jdk.jfr.Unsigned;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -112,7 +113,8 @@ public class Shader
         fragFile = shader.fragFile;
         geomFile = shader.geomFile;
 
-
+        isLit = shader.isLit;
+        receiveShadows = shader.receiveShadows;
 
         Init(shader.mainTex);
     }
@@ -197,7 +199,8 @@ public class Shader
     public void Bind()
     {
         glUseProgram(programID);
-        mainTex.Bind();
+        if(mainTex != null)
+            mainTex.Bind();
     }
 
     /**
@@ -205,7 +208,8 @@ public class Shader
      */
     public void Unbind()
     {
-        mainTex.Unbind();
+        if(mainTex != null)
+            mainTex.Unbind();
         glUseProgram(0);
     }
 
@@ -214,7 +218,8 @@ public class Shader
      */
     public void Destroy()
     {
-        mainTex.Destroy();
+        if(mainTex != null)
+            mainTex.Destroy();
         glDeleteProgram(programID);
     }
     /**
@@ -315,6 +320,10 @@ public class Shader
         if(value instanceof Integer intValue)
         {
             glUniform1i(uniformProperty, intValue);
+        }
+        else if(value instanceof Long longValue) //longs are interpreted as uints because java
+        {
+            glUniform1ui(uniformProperty, (int) (longValue & 0xFFFFFFFFL));
         }
         else if(value instanceof Float floatValue)
         {

@@ -2,7 +2,7 @@ package JGame.Engine.Physics.Collision.BoundingVolumeHierarchy;
 
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
-import JGame.Engine.Physics.Collision.Contacts.PotentialContact;
+import JGame.Engine.Physics.Collision.Contact.PotentialContact;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +109,18 @@ public class BVHNode
         if(IsLeaf() || limit == 0)
             return new ArrayList<>();
 
-        return children[0].GetPotentialContactsWith(children[1], new ArrayList<>(), limit);
+        List<PotentialContact> potentialContacts = children[0].GetPotentialContactsWith(children[1], new ArrayList<>(), limit);
+
+        if (children[0] != null && potentialContacts.size() < limit)
+        {
+            potentialContacts.addAll(children[0].GetPotentialContacts(limit - potentialContacts.size()));
+        }
+        if (children[1] != null && potentialContacts.size() < limit)
+        {
+            potentialContacts.addAll(children[1].GetPotentialContacts(limit - potentialContacts.size()));
+        }
+
+        return potentialContacts;
     }
     /**
      * Updates the potential contacts list between this node and another and returns the number of potential contacts found
@@ -124,7 +135,7 @@ public class BVHNode
      */
     protected List<PotentialContact> GetPotentialContactsWith(BVHNode other, List<PotentialContact> potentialContacts, int limit)
     {
-        if(!Overlaps(other) || limit == 0)
+        if(!Overlaps(other) || limit <= 0)
             return potentialContacts;
 
         if(IsLeaf() && other.IsLeaf())
@@ -172,7 +183,7 @@ public class BVHNode
      */
     public void Insert(Rigidbody newBody, BoundingVolume newVolume)
     {
-        if(IsLeaf())
+        if (IsLeaf())
         {
             children[0] = new BVHNode(this, body, volume);
             children[1] = new BVHNode(this, newBody, newVolume);
@@ -182,7 +193,7 @@ public class BVHNode
         }
         else
         {
-            if(children[0].volume.GetGrowth(newVolume) < children[1].volume.GetGrowth(newVolume))
+            if (children[0].volume.GetGrowth(newVolume) < children[1].volume.GetGrowth(newVolume))
             {
                 children[0].Insert(newBody, newVolume);
             }
@@ -191,7 +202,6 @@ public class BVHNode
                 children[1].Insert(newBody, newVolume);
             }
         }
-
     }
 
     /**
@@ -262,5 +272,42 @@ public class BVHNode
         parent = null;
     }
 
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+        toStringHelper(this, sb, "", true);
+        return sb.toString();
+    }
+
+    private void toStringHelper(BVHNode node, StringBuilder sb, String prefix, boolean isTail)
+    {
+        if (node != null)
+        {
+            sb.append(prefix)
+                    .append(isTail ? "└── " : "├── ")
+                    .append(nodeDescription(node))
+                    .append("\n");
+
+            String newPrefix = prefix + (isTail ? "    " : "│   ");
+
+            if (node.children[0] != null || node.children[1] != null)
+            {
+                if (node.children[0] != null)
+                {
+                    toStringHelper(node.children[0], sb, newPrefix, node.children[1] == null);
+                }
+                if (node.children[1] != null)
+                {
+                    toStringHelper(node.children[1], sb, newPrefix, true);
+                }
+            }
+        }
+    }
+
+    private String nodeDescription(BVHNode node)
+    {
+        return "[Body: " + (node.body != null ? node.body.object().name : "null") + ", Volume: " + (node.volume != null ? node.volume.toString(): "null") + "]";
+    }
 }
 

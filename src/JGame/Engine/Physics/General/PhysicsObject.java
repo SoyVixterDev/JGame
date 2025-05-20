@@ -5,7 +5,6 @@ import JGame.Engine.Basic.JGameObject;
 
 public abstract class PhysicsObject extends JComponent
 {
-
     @Override
     protected void OnEnable()
     {

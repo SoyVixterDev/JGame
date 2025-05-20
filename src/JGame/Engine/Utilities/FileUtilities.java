@@ -279,7 +279,7 @@ public class FileUtilities
             {
                 try (AIMesh mesh = AIMesh.create(scene.mMeshes().get(i)))
                 {
-                    Quaternion rotation90 = Quaternion.EulerToQuaternion(new Vector3D((float) Math.toRadians(-90), 0, 0));
+                    Quaternion rotation90 = Quaternion.EulerToQuaternion(new Vector3D(-90, 0, 0));
 
                     // Extract Vertices
                     for (int j = 0; j < mesh.mNumVertices(); j++)

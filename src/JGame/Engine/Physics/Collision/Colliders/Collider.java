@@ -5,9 +5,9 @@ import JGame.Engine.EventSystem.Event1P;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
-import JGame.Engine.Physics.Collision.Contacts.Contact;
-import JGame.Engine.Physics.Collision.Helper.BoundingVolumeHelper;
+import JGame.Engine.Physics.Collision.Contact.Contact;
 import JGame.Engine.Physics.Collision.Helper.CollisionHelper;
+import JGame.Engine.Physics.Raycast.RaycastContact;
 import JGame.Engine.Settings;
 import JGame.Engine.Structures.ColorRGBA;
 import JGame.Engine.Structures.Vector3D;
@@ -65,6 +65,16 @@ public abstract class Collider extends JComponent
         this.center = center;
     }
 
+    /**
+     * Sets the rigidbody to which this collider is attached to, this function shouldn't be usually used
+     * @param rigidbody
+     * The rigidbody to set
+     */
+    public void SetRigidbody(Rigidbody rigidbody)
+    {
+        this.rigidbody = rigidbody;
+    }
+
     private void CreateRenderer()
     {
         colliderRenderer = CreateWireframe();
@@ -78,7 +88,7 @@ public abstract class Collider extends JComponent
     {
         rigidbody = object().GetComponentInParent(Rigidbody.class);
 
-        if(Settings.Debug.GetDebugBVH())
+        if(Settings.Debug.GetDebugView())
             CreateRenderer();
 
         Settings.Debug.changeDebugViewEvent.Subscribe(OnDebugView);
@@ -94,7 +104,7 @@ public abstract class Collider extends JComponent
     protected final void OnEnable()
     {
         if(rigidbody != null)
-            rigidbody.AddCollider(this);
+            rigidbody.  AddCollider(this);
     }
 
     @Override
@@ -105,71 +115,299 @@ public abstract class Collider extends JComponent
     }
 
     /**
+     * Gets and returns a contact from a raycast
+     * @param origin
+     * The origin of the ray
+     * @param direction
+     * The direction of the ray
+     * @param maxDistance
+     * The maximum distance
+     * @return
+     * The contact, or null if it doesn't find any
+     */
+    public abstract RaycastContact Raycast(Vector3D origin, Vector3D direction, float maxDistance);
+
+    /**
      * Checks if this collider overlaps with another
      * @param other
      * The other collider
      * @return
      * True if the colliders are overlapping
      */
-    @SuppressWarnings("JavaReflectionMemberAccess")
     public final boolean Overlaps(Collider other)
     {
-        try
+        // Handle cases where `this` is a BoxCollider
+        if (this instanceof BoxCollider box)
         {
-            try
+            if (other instanceof BoxCollider boxB)
             {
-                var method = CollisionHelper.class.getMethod("Overlaps", this.getClass(), other.getClass());
-                return (Boolean) method.invoke(null, this, other);
+                return CollisionHelper.Overlaps(box, boxB);
             }
-            catch(NoSuchMethodException e1)
+            else if (other instanceof SphereCollider sphere)
             {
-                var method = BoundingVolumeHelper.class.getMethod("Overlaps", other.getClass(), this.getClass());
-                return (Boolean) method.invoke(null, other, this);
+                return CollisionHelper.Overlaps(box, sphere);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.Overlaps(box, capsule);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.Overlaps(box, cylinder);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.Overlaps(box, plane);
             }
         }
-        catch (NoSuchMethodException e)
+
+        // Handle cases where `this` is a SphereCollider
+        else if (this instanceof SphereCollider sphere)
         {
-            throw new IllegalArgumentException("Invalid Collider type! Add the appropriate GetContacts method to this class. Type: " + other.getClass().getName(), e);
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.Overlaps(box, sphere);
+            }
+            else if (other instanceof SphereCollider sphereB)
+            {
+                return CollisionHelper.Overlaps(sphere, sphereB);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.Overlaps(sphere, capsule);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.Overlaps(sphere, cylinder);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.Overlaps(sphere, plane);
+            }
         }
-        catch (Exception e)
+
+        // Handle cases where `this` is a CapsuleCollider
+        else if (this instanceof CapsuleCollider capsule)
         {
-            throw new RuntimeException("An error occurred while getting contacts with collider type: " + other.getClass().getName(), e);
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.Overlaps(box, capsule);
+            }
+            else if (other instanceof SphereCollider sphere)
+            {
+                return CollisionHelper.Overlaps(sphere, capsule);
+            }
+            else if (other instanceof CapsuleCollider capsuleB)
+            {
+                return CollisionHelper.Overlaps(capsule, capsuleB);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.Overlaps(cylinder, capsule);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.Overlaps(capsule, plane);
+            }
         }
+
+        // Handle cases where `this` is a CylinderCollider
+        else if (this instanceof CylinderCollider cylinder)
+        {
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.Overlaps(box, cylinder);
+            }
+            else if (other instanceof SphereCollider sphere)
+            {
+                return CollisionHelper.Overlaps(sphere, cylinder);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.Overlaps(cylinder, capsule);
+            }
+            else if (other instanceof CylinderCollider cylinderB)
+            {
+                return CollisionHelper.Overlaps(cylinder, cylinderB);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.Overlaps(cylinder, plane);
+            }
+        }
+
+        // Handle cases where `this` is a PlaneCollider
+        else if (this instanceof PlaneCollider plane)
+        {
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.Overlaps(box, plane);
+            }
+            else if (other instanceof SphereCollider sphere)
+            {
+                return CollisionHelper.Overlaps(sphere, plane);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.Overlaps(capsule, plane);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.Overlaps(cylinder, plane);
+            }
+            else if (other instanceof PlaneCollider planeB)
+            {
+                return CollisionHelper.Overlaps(plane, planeB);
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Invalid Collider type combination! Collider types: "
+                        + this.getClass().getName() + " and "
+                        + other.getClass().getName()
+        );
     }
+
 
     /**
      * Gets contacts between this collider and another
      * @param other
      * The other collider
-     * @param limit
-     * The limit count of contacts to get
      * @return
-     * A list of the contacts between colliders, empty if no contacts were found
+     * A contact between colliders, null if no contacts were found
      */
-    @SuppressWarnings("JavaReflectionMemberAccess")
-    public final Contact GetContact(Collider other, int limit)
+    public final Contact GetContact(Collider other)
     {
-        try
+        // Handle cases where `this` is a BoxCollider
+        if (this instanceof BoxCollider box)
         {
-            try
+            if (other instanceof BoxCollider boxB)
             {
-                var method = CollisionHelper.class.getMethod("GetContact", this.getClass(), other.getClass(), int.class);
-                return (Contact) method.invoke(null, this, other, limit);
+                return CollisionHelper.GetContact(box, boxB);
             }
-            catch(NoSuchMethodException e1)
+            else if (other instanceof SphereCollider sphere)
             {
-                var method = CollisionHelper.class.getMethod("GetContact", other.getClass(), this.getClass(), int.class);
-                return (Contact) method.invoke(null, other, this, limit);
+                return CollisionHelper.GetContact(box, sphere);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.GetContact(box, capsule);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.GetContact(box, cylinder);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.GetContact(box, plane);
             }
         }
-        catch (NoSuchMethodException e)
+
+        // Handle cases where `this` is a SphereCollider
+        else if (this instanceof SphereCollider sphere)
         {
-            throw new IllegalArgumentException("Invalid Collider type! Add the appropriate GetContacts method to this class. Type: " + other.getClass().getName(), e);
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.GetContact(box, sphere);
+            }
+            else if (other instanceof SphereCollider sphereB)
+            {
+                return CollisionHelper.GetContact(sphere, sphereB);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.GetContact(sphere, capsule);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.GetContact(sphere, cylinder);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.GetContact(sphere, plane);
+            }
         }
-        catch (Exception e)
+
+        // Handle cases where `this` is a CapsuleCollider
+        else if (this instanceof CapsuleCollider capsule)
         {
-            throw new RuntimeException("An error occurred while getting contacts with collider type: " + other.getClass().getName(), e);
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.GetContact(box, capsule);
+            }
+            else if (other instanceof SphereCollider sphere)
+            {
+                return CollisionHelper.GetContact(sphere, capsule);
+            }
+            else if (other instanceof CapsuleCollider capsuleB)
+            {
+                return CollisionHelper.GetContact(capsule, capsuleB);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.GetContact(cylinder, capsule);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.GetContact(capsule, plane);
+            }
         }
+
+        // Handle cases where `this` is a CylinderCollider
+        else if (this instanceof CylinderCollider cylinder)
+        {
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.GetContact(box, cylinder);
+            }
+            else if (other instanceof SphereCollider sphere)
+            {
+                return CollisionHelper.GetContact(sphere, cylinder);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.GetContact(cylinder, capsule);
+            }
+            else if (other instanceof CylinderCollider cylinderB)
+            {
+                return CollisionHelper.GetContact(cylinder, cylinderB);
+            }
+            else if (other instanceof PlaneCollider plane)
+            {
+                return CollisionHelper.GetContact(cylinder, plane);
+            }
+        }
+
+        // Handle cases where `this` is a PlaneCollider
+        else if (this instanceof PlaneCollider plane)
+        {
+            if (other instanceof BoxCollider box)
+            {
+                return CollisionHelper.GetContact(box, plane);
+            }
+            else if (other instanceof SphereCollider sphere)
+            {
+                return CollisionHelper.GetContact(sphere, plane);
+            }
+            else if (other instanceof CapsuleCollider capsule)
+            {
+                return CollisionHelper.GetContact(capsule, plane);
+            }
+            else if (other instanceof CylinderCollider cylinder)
+            {
+                return CollisionHelper.GetContact(cylinder, plane);
+            }
+            else if (other instanceof PlaneCollider planeB)
+            {
+                return CollisionHelper.GetContact(plane, planeB);
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Invalid Collider type combination! Collider types: "
+                        + this.getClass().getName() + " and "
+                        + other.getClass().getName()
+        );
     }
 
 

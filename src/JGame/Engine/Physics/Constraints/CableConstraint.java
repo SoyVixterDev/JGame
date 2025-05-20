@@ -1,6 +1,6 @@
 package JGame.Engine.Physics.Constraints;
 
-import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
 
 /**
  * Constraint that links two objects using a cable, creating a contact if they stray too far

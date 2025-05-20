@@ -53,4 +53,9 @@ public class BoundingSphere extends BoundingVolume
 
         return expandedSize - originalSize;
     }
+    @Override
+    public String toString()
+    {
+        return "BoundingSphere{" + "Radius: " + radius + ", Center: " + center + '}';
+    }
 }

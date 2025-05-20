@@ -16,9 +16,9 @@ public class GlobalLinearDragForceGenerator implements IForceGenerator
     @Override
     public void UpdateForce(Rigidbody body)
     {
-        if(body.linearVelocity.equals(Vector3D.Zero)) return;
+        if(body.GetLinearVelocity().equals(Vector3D.Zero)) return;
 
-        Vector3D dragForce = body.linearVelocity;
+        Vector3D dragForce = body.GetLinearVelocity();
 
         float dragCoefficient = dragForce.Magnitude();
 
@@ -28,7 +28,7 @@ public class GlobalLinearDragForceGenerator implements IForceGenerator
 
         dragForce = dragForce.Normalized().Scale(-dragCoefficient);
 
-        body.AddForce(dragForce, Rigidbody.ForceType.Impulse);
+        body.AddForce(dragForce, Rigidbody.ForceType.Force);
     }
 
     @Override

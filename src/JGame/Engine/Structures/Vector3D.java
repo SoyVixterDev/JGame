@@ -1,6 +1,7 @@
 package JGame.Engine.Structures;
 
 import java.util.Objects;
+import java.util.Vector;
 
 /**
  * Class representing a 3D Vector with X, Y and Z components
@@ -10,6 +11,22 @@ public class Vector3D
     public final float x;
     public final float y;
     public final float z;
+
+    public Vector3D(Vector3D vector)
+    {
+        this.x = vector.x;
+        this.y = vector.y;
+        this.z = vector.z;
+
+        this.calculatedNormalized = vector.calculatedNormalized;
+        this.normalized = vector.normalized;
+
+        this.calculatedMagnitude = vector.calculatedMagnitude;
+        this.magnitude = vector.magnitude;
+
+        this.calculatedSquaredMagnitude = vector.calculatedSquaredMagnitude;
+        this.squaredMagnitude = vector.squaredMagnitude;
+    }
 
     public Vector3D(float[] xyz)
     {
@@ -50,9 +67,13 @@ public class Vector3D
         if(!calculatedNormalized)
         {
             float magnitude = Magnitude();
-            if(magnitude == 0f || Float.isNaN(magnitude))
+            if(Math.abs(magnitude - 1.0f) < 1e-7 || magnitude < 1e-7)
             {
-                normalized = Vector3D.Zero;
+                normalized = this;
+            }
+            else if(magnitude == Float.POSITIVE_INFINITY || Float.isNaN(magnitude))
+            {
+                normalized = Zero;
             }
             else
             {
@@ -64,8 +85,7 @@ public class Vector3D
         return normalized;
     }
 
-
-    private boolean calculatedMagnitude;
+    private boolean calculatedMagnitude = false;
     private float magnitude;
 
     /**
@@ -433,64 +453,6 @@ public class Vector3D
         float dz = a.z - b.z;
 
         return dx * dx + dy * dy + dz * dz;
-    }
-
-    /**
-     * Linearly interpolates from vector a to a vector b by t (0 to 1)
-     * @param a
-     * From
-     * @param b
-     * To
-     * @param t
-     * By
-     * @return
-     * The interpolated vector
-     */
-    public static Vector3D Lerp(Vector3D a, Vector3D b, float t)
-    {
-        return Vector3D.Add
-                (
-                        a.Scale(1.0f - t),
-                        b.Scale(t)
-                );
-    }
-
-    /**
-     * Performs an element-wise max function
-     * @param a
-     * Vector A
-     * @param b
-     * Vector B
-     * @return
-     * The Vector3D resulting of the bigger components between a and b
-     */
-    public static Vector3D Max(Vector3D a, Vector3D b)
-    {
-        return new Vector3D
-        (
-                Math.max(a.x, b.x),
-                Math.max(a.y, b.y),
-                Math.max(a.z, b.z)
-        );
-    }
-
-    /**
-     * Performs an element-wise min function
-     * @param a
-     * Vector A
-     * @param b
-     * Vector B
-     * @return
-     * The Vector3D resulting of the smaller components between a and b
-     */
-    public static Vector3D Min(Vector3D a, Vector3D b)
-    {
-        return new Vector3D
-                (
-                        Math.min(a.x, b.x),
-                        Math.min(a.y, b.y),
-                        Math.min(a.z, b.z)
-                );
     }
 
     /**

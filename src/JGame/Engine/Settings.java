@@ -83,14 +83,32 @@ public final class Settings
         /**
          * The max number of potential collisions to check during the broad collision detection phase in a single frame
          */
-        public static final int broadCollisionLimit = 10000;
+        public static int BroadCollisionLimit()
+        {
+            int countObj = JGame.Engine.Physics.General.Physics.physicsObjects.size();
+            return Math.min(countObj * 20, 3000);
+        }
         /**
          * The max number of contacts to generate during the fine collision detection phase in a single frame
          */
-        public static final int fineCollisionLimit = 5000;
+        public static int FineCollisionLimit(int potentialContacts)
+        {
+            return potentialContacts * 5;
+        }
         /**
-         * The max number of iterations during the contact resolution phase in a single frame
+         * The max number of iterations during the interpenetration contact resolution phase in a single frame
          */
-        public static final int contactResolutionLimit = 4000;
+        public static int ContactInterpenetrationResolutionLimit(int contacts)
+        {
+            return Math.min(contacts * 3, 500);
+        }
+        /**
+         * The max number of iterations during the velocity contact resolution phase in a single frame
+         */
+        public static int ContactVelocityResolutionLimit(int contacts)
+        {
+            return Math.min(contacts * 2, 250);
+        }
+
     }
 }

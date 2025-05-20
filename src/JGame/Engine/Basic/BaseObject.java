@@ -5,6 +5,7 @@ import Project.JGameInstance;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
 /**
@@ -31,33 +32,15 @@ public abstract class BaseObject
 
             return instance;
         }
-        catch (Exception e)
+        catch(NoSuchMethodException e)
         {
             throw new RuntimeException("Failed to create instance for " + clazz.getName() + ". Ensure it extends BaseObject and has a default constructor.", e);
         }
-    }
-
-    private static <T extends BaseObject> Constructor<?> getConstructor(Class<T> clazz, Object[] args) throws NoSuchMethodException
-    {
-        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
-        Constructor<?> targetConstructor = null;
-
-        for (Constructor<?> constructor : constructors)
+        catch (Exception e)
         {
-            if (constructor.getParameterCount() == args.length)
-            {
-                targetConstructor = constructor;
-                break;
-            }
+            throw new RuntimeException("Failed to create instance for " + clazz.getName() + ". Error:", e);
         }
-
-        if (targetConstructor == null)
-        {
-            throw new NoSuchMethodException("No suitable constructor found for " + clazz.getName());
-        }
-        return targetConstructor;
     }
-
 
     /**
      * Don't use the constructor to instantiate BaseObjects, use BaseObject.CreateInstance(type) instead!
@@ -217,7 +200,8 @@ public abstract class BaseObject
             }
             for(Transform child : object.transform().GetChildren())
             {
-                ((BaseObject)child.object()).UpdateAvailability();
+                if(child.object() != null)
+                    ((BaseObject)child.object()).UpdateAvailability();
             }
         }
     }
@@ -271,6 +255,9 @@ public abstract class BaseObject
             Field[] fields = currentClass.getDeclaredFields();
             for (Field field : fields)
             {
+                if (Modifier.isFinal(field.getModifiers()))
+                    continue;
+
                 field.setAccessible(true);
                 try
                 {

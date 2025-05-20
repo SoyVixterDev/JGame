@@ -16,9 +16,9 @@ public class GlobalAngularDragForceGenerator implements IForceGenerator
     @Override
     public void UpdateForce(Rigidbody body)
     {
-        if(body.angularVelocity.equals(Vector3D.Zero)) return;
+        if(body.GetAngularVelocity().IsZero()) return;
 
-        Vector3D dragForce = body.angularVelocity;
+        Vector3D dragForce = body.GetAngularVelocity();
 
         float dragCoefficient = dragForce.Magnitude();
 
@@ -28,7 +28,7 @@ public class GlobalAngularDragForceGenerator implements IForceGenerator
 
         dragForce = dragForce.Normalized().Scale(-dragCoefficient);
 
-        body.AddTorque(dragForce, Rigidbody.ForceType.Impulse);
+        body.AddTorque(dragForce, Rigidbody.ForceType.Force);
     }
 
     @Override

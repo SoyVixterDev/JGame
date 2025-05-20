@@ -1,7 +1,7 @@
 package JGame.Engine.Physics.Collision.Detection;
 
-import JGame.Engine.Physics.Collision.Contacts.Contact;
-import JGame.Engine.Physics.Collision.Contacts.PotentialContact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
+import JGame.Engine.Physics.Collision.Contact.PotentialContact;
 import JGame.Engine.Settings;
 
 import java.util.ArrayList;
@@ -22,10 +22,11 @@ public class FineCollisionDetection
     public static List<Contact> GetContacts(List<PotentialContact> potentialContacts)
     {
         List<Contact> contacts = new ArrayList<>();
+        int potentialContactsCount = potentialContacts.size();
 
         for(PotentialContact potentialContact : potentialContacts)
         {
-            contacts.addAll(potentialContact.GetContacts(Settings.Physics.fineCollisionLimit));
+            contacts.addAll(potentialContact.GetContacts(Settings.Physics.FineCollisionLimit(potentialContactsCount)));
         }
 
         return contacts;

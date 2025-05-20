@@ -5,9 +5,11 @@ import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
-import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
+import JGame.Engine.Physics.Raycast.RaycastContact;
 import JGame.Engine.Structures.Vector2D;
 import JGame.Engine.Structures.Vector3D;
+import JGame.Engine.Utilities.MathUtilities;
 
 public class PlaneCollider extends Collider
 {
@@ -18,7 +20,7 @@ public class PlaneCollider extends Collider
 
     public void SetHalfSize(Vector2D halfSize)
     {
-        ((WireplaneRenderer)colliderRenderer).SetHalfSize(halfSize);
+        ((WireplaneRenderer)colliderRenderer).SetHalfSize(MathUtilities.Abs(halfSize));
         this.halfSize = halfSize;
     }
     public Vector2D GetHalfSize()
@@ -28,6 +30,7 @@ public class PlaneCollider extends Collider
     public Vector2D GetScaledHalfSize()
     {
         Vector3D scale = transform().GetGlobalScale();
+        scale = MathUtilities.Abs(scale);
         return halfSize.Multiply(new Vector2D(scale.x, scale.z));
     }
     public Vector3D GetNormal()
@@ -36,9 +39,15 @@ public class PlaneCollider extends Collider
     }
 
     @Override
+    public RaycastContact Raycast(Vector3D origin, Vector3D direction, float maxDistance)
+    {
+        return null;
+    }
+
+    @Override
     protected WireshapeRenderer CreateWireframe()
     {
-        WireplaneRenderer wireplaneRenderer = new WireplaneRenderer();
+        WireplaneRenderer wireplaneRenderer = object().AddComponent(WireplaneRenderer.class);
 
         wireplaneRenderer.SetHalfSize(halfSize);
         wireplaneRenderer.SetCenter(center);

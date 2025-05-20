@@ -2,11 +2,14 @@ package JGame.Engine.Physics.Collision.Colliders;
 
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WirecubeRenderer;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WireshapeRenderer;
+import JGame.Engine.Internal.Logger;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
-import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
+import JGame.Engine.Physics.Raycast.RaycastContact;
 import JGame.Engine.Structures.Vector3D;
+import JGame.Engine.Utilities.MathUtilities;
 
 public class BoxCollider extends Collider
 {
@@ -21,20 +24,97 @@ public class BoxCollider extends Collider
     }
     public Vector3D GetScaledHalfSize()
     {
-        return halfSize.Multiply(transform().GetGlobalScale());
+        return MathUtilities.Abs(halfSize).Multiply(transform().GetGlobalScale());
     }
 
     public void SetHalfSize(Vector3D halfSize)
     {
         this.halfSize = halfSize;
-        ((WirecubeRenderer)colliderRenderer).SetHalfSize(halfSize);
+        if(colliderRenderer != null)
+            ((WirecubeRenderer)colliderRenderer).SetHalfSize(MathUtilities.Abs(halfSize));
     }
     @Override
     public void SetCenter(Vector3D center)
     {
         this.center = center;
-        ((WirecubeRenderer)colliderRenderer).SetCenter(center);
+        if(colliderRenderer != null)
+            ((WirecubeRenderer)colliderRenderer).SetCenter(center);
     }
+    @Override
+    public RaycastContact Raycast(Vector3D origin, Vector3D direction, float maxDistance)
+    {
+        Vector3D localOrigin = transform().WorldToLocalSpace(origin);
+        Vector3D localDirection = transform().WorldToLocalSpace(origin.Add(direction)).Subtract(localOrigin).Normalized();
+
+        Vector3D halfSize = GetScaledHalfSize();
+
+        float tMin = 0.0f;
+        float tMax = maxDistance;
+
+        for (int i = 0; i < 3; i++)
+        {
+            float originCoord = (i == 0) ? localOrigin.x : (i == 1) ? localOrigin.y : localOrigin.z;
+            float directionCoord = (i == 0) ? localDirection.x : (i == 1) ? localDirection.y : localDirection.z;
+            float minBound = (i == 0) ? -halfSize.x : (i == 1) ? -halfSize.y : -halfSize.z;
+            float maxBound = (i == 0) ? halfSize.x : (i == 1) ? halfSize.y : halfSize.z;
+
+            if (Math.abs(directionCoord) < 1e-4f) // Parallel to the slab
+            {
+                if (originCoord < minBound || originCoord > maxBound)
+                {
+                    return null; // No intersection
+                }
+            }
+            else
+            {
+                float t1 = (minBound - originCoord) / directionCoord;
+                float t2 = (maxBound - originCoord) / directionCoord;
+
+                if (t1 > t2)
+                {
+                    float temp = t1;
+                    t1 = t2;
+                    t2 = temp;
+                }
+
+                tMin = Math.max(tMin, t1);
+                tMax = Math.min(tMax, t2);
+
+                if (tMin > tMax)
+                {
+                    return null; // No intersection
+                }
+            }
+        }
+
+        if (tMin < 0 || tMin > maxDistance)
+        {
+            return null;
+        }
+
+        Vector3D collisionPointLocal = localOrigin.Add(localDirection.Scale(tMin));
+
+        Vector3D normalLocal = Vector3D.Zero;
+        if (Math.abs(collisionPointLocal.x - halfSize.x) < 1e-4f) normalLocal = new Vector3D(1, 0, 0);
+        else if (Math.abs(collisionPointLocal.x + halfSize.x) < 1e-4f) normalLocal = new Vector3D(-1, 0, 0);
+        else if (Math.abs(collisionPointLocal.y - halfSize.y) < 1e-4f) normalLocal = new Vector3D(0, 1, 0);
+        else if (Math.abs(collisionPointLocal.y + halfSize.y) < 1e-4f) normalLocal = new Vector3D(0, -1, 0);
+        else if (Math.abs(collisionPointLocal.z - halfSize.z) < 1e-4f) normalLocal = new Vector3D(0, 0, 1);
+        else if (Math.abs(collisionPointLocal.z + halfSize.z) < 1e-4f) normalLocal = new Vector3D(0, 0, -1);
+
+        if (normalLocal.IsZero())
+        {
+            return null; // Handle edge case if no valid normal is found
+        }
+
+        Vector3D collisionPointWorld = transform().LocalToWorldSpace(collisionPointLocal);
+        Vector3D normalWorld = transform().LocalToWorldSpace(normalLocal).Normalized();
+
+        return new RaycastContact(collisionPointWorld, normalWorld, GetRigidbody());
+    }
+
+
+
 
     @Override
     protected WireshapeRenderer CreateWireframe()

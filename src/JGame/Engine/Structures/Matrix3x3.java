@@ -13,6 +13,16 @@ public class Matrix3x3
      */
     public final float[] values = new float[9];
 
+    public Matrix3x3(Vector3D a, Vector3D b, Vector3D c)
+    {
+        this(new float[]
+        {
+            a.x, b.x, c.x,
+            a.y, b.y, c.y,
+            a.z, b.z, c.z
+        });
+    }
+
     /**
      * Creates a new Matrix with all elements equal to 0
      */
@@ -119,6 +129,43 @@ public class Matrix3x3
         return inverse;
     }
 
+    /**
+     * Scales the matrix by a scalar
+     * @param scalar
+     * The scalar value
+     * @return
+     * The scaled value
+     */
+    public Matrix3x3 Scale(float scalar)
+    {
+        Matrix3x3 newMat = new Matrix3x3(this);
+
+        for(int i = 0; i < 9; i++)
+        {
+            newMat.values[i] *= scalar;
+        }
+
+        return newMat;
+    }
+
+    /**
+     * Adds the matrix element-wise
+     * @param other
+     * The other matrix
+     * @return
+     * The result matrix
+     */
+    public Matrix3x3 Add(Matrix3x3 other)
+    {
+        Matrix3x3 newMat = new Matrix3x3(this);
+
+        for(int i = 0; i < 9; i++)
+        {
+            newMat.values[i] += other.values[i];
+        }
+
+        return newMat;
+    }
 
     /**
      * Multiplies two matrices
@@ -225,6 +272,14 @@ public class Matrix3x3
         return new Matrix4x4(values);
     }
 
+    public static Matrix3x3 SkewSymmetric(Vector3D vector)
+    {
+        return new Matrix3x3(
+                new float[]{0, -vector.z, vector.y,
+                vector.z, 0, -vector.x,
+                -vector.y, vector.x, 0}
+        );
+    }
 
     @Override
     public String toString()
@@ -238,7 +293,7 @@ public class Matrix3x3
                 result.append(values[x * 3 + y]).append(" ");
             }
             result.setLength(result.length() - 1); // Remove last space
-            result.append("]\n");
+            result.append("]");
         }
         return result.toString();
     }
@@ -255,6 +310,21 @@ public class Matrix3x3
                 1f, 0f, 0f,
                 0f, 1f, 0f,
                 0f, 0f, 1f
+            }
+        );
+    }
+    /**
+     * Zero matrix
+     */
+    public static Matrix3x3 Zero()
+    {
+        return new Matrix3x3
+        (
+            new float[]
+            {
+                    0f, 0f, 0f,
+                    0f, 0f, 0f,
+                    0f, 0f, 0f
             }
         );
     }

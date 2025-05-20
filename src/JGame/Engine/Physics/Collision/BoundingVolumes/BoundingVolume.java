@@ -3,6 +3,7 @@ package JGame.Engine.Physics.Collision.BoundingVolumes;
 import JGame.Engine.Internal.Logger;
 import JGame.Engine.Physics.Collision.Helper.BoundingVolumeHelper;
 import JGame.Engine.Structures.Vector3D;
+import JGame.Engine.Utilities.MathUtilities;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,30 +26,31 @@ public abstract class BoundingVolume
      * @return
      * True if the volumes are overlapping
      */
-    @SuppressWarnings("JavaReflectionMemberAccess")
     public final boolean Overlaps(BoundingVolume other)
     {
-        try
+        if (this instanceof BoundingBox boxA)
         {
-            try
+            if (other instanceof BoundingBox boxB)
             {
-                var method = BoundingVolumeHelper.class.getMethod("Overlaps", this.getClass(), other.getClass());
-                return (Boolean) method.invoke(null, this, other);
+                return BoundingVolumeHelper.Overlaps(boxA, boxB);
             }
-            catch(NoSuchMethodException e1)
+            else if (other instanceof BoundingSphere sphereB)
             {
-                var method = BoundingVolumeHelper.class.getMethod("Overlaps", other.getClass(), this.getClass());
-                return (Boolean) method.invoke(null, other, this);
+                return BoundingVolumeHelper.Overlaps(boxA, sphereB);
             }
         }
-        catch (NoSuchMethodException e)
+        else if (this instanceof BoundingSphere sphereA)
         {
-            throw new IllegalArgumentException("Invalid Collider type! Add the appropriate GetContacts method to this class. Type: " + other.getClass().getName(), e);
+            if (other instanceof BoundingBox boxB)
+            {
+                return BoundingVolumeHelper.Overlaps(boxB, sphereA);
+            }
+            else if (other instanceof BoundingSphere sphereB)
+            {
+                return BoundingVolumeHelper.Overlaps(sphereA, sphereB);
+            }
         }
-        catch (Exception e)
-        {
-            throw new RuntimeException("An error occurred while getting contacts with collider type: " + other.getClass().getName(), e);
-        }
+        throw new IllegalArgumentException("Unsupported Bounding Volume types");
     }
 
 
@@ -152,15 +154,15 @@ public abstract class BoundingVolume
 
             if (volume instanceof BoundingBox box)
             {
-                min = Vector3D.Min(min, box.Min());
-                max = Vector3D.Max(max, box.Max());
+                min = MathUtilities.Min(min, box.Min());
+                max = MathUtilities.Max(max, box.Max());
             }
             else if (volume instanceof BoundingSphere sphere)
             {
                 Vector3D sphereMin = sphere.center.Subtract(new Vector3D(sphere.radius, sphere.radius, sphere.radius));
                 Vector3D sphereMax = sphere.center.Add(new Vector3D(sphere.radius, sphere.radius, sphere.radius));
-                min = Vector3D.Min(min, sphereMin);
-                max = Vector3D.Max(max, sphereMax);
+                min = MathUtilities.Min(min, sphereMin);
+                max = MathUtilities.Max(max, sphereMax);
             }
             else
             {
@@ -230,4 +232,10 @@ public abstract class BoundingVolume
     public abstract float GetVolume();
     public abstract float GetGrowth(BoundingVolume volume);
     public Vector3D GetCenter() { return center; }
+
+    @Override
+    public String toString()
+    {
+        return "BoundingVolume{" + "Center: " + center + '}';
+    }
 }

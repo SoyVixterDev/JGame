@@ -134,13 +134,4 @@ public class MeshRenderer extends Renderer implements ILightHandler
         glDisableVertexAttribArray(2);
         glDisableVertexAttribArray(3);
     }
-
-    @Override
-    protected void OnDestroy()
-    {
-        if(mesh != null) mesh.Destroy();
-        if(material != null) material.Destroy();
-
-        super.OnDestroy();
-    }
 }

@@ -1,4 +1,4 @@
-package JGame.Engine.Physics.Collision.Contacts;
+package JGame.Engine.Physics.Collision.Contact;
 
 import JGame.Engine.Physics.Bodies.Rigidbody;
 

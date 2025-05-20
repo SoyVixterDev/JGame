@@ -4,11 +4,10 @@ import JGame.Engine.Basic.BaseObject;
 import JGame.Engine.Basic.JGameObject;
 import JGame.Engine.EventSystem.Event1P;
 import JGame.Engine.Graphics.Renderers.WireframeRenderers.WirecubeRenderer;
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Physics.Bodies.Rigidbody;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingBox;
 import JGame.Engine.Physics.Collision.BoundingVolumes.BoundingVolume;
-import JGame.Engine.Physics.Collision.Contacts.PotentialContact;
+import JGame.Engine.Physics.Collision.Contact.PotentialContact;
 import JGame.Engine.Settings;
 
 import java.util.ArrayList;
@@ -50,7 +49,9 @@ public class BVHManager extends BaseObject
 
     public List<PotentialContact> GetPotentialContacts()
     {
-        return root.GetPotentialContacts(Settings.Physics.broadCollisionLimit);
+        if(root == null) return List.of();
+
+        return root.GetPotentialContacts(Settings.Physics.BroadCollisionLimit());
     }
 
     @Override
@@ -130,8 +131,13 @@ public class BVHManager extends BaseObject
      */
     public void Remove(Rigidbody body)
     {
+        if(root == null) return;
+
         BVHNode node = FindNode(body);
         if(node != null) node.RemoveNode();
+
+        if(node == root)
+            root = null;
     }
     /**
      * Finds a node along the tree based on a rigidbody
@@ -174,10 +180,9 @@ public class BVHManager extends BaseObject
      * @return
      * The node that corresponds to this body, or null if it's not found
      */
-    private BVHNode FindNode(Rigidbody body, BVHNode node)
+    private static BVHNode FindNode(Rigidbody body, BVHNode node)
     {
         if(node == null) return null;
-        if(node.children == null) return null;
         if(node.body == body) return node;
         if(node.IsLeaf()) return null;
 
@@ -195,5 +200,11 @@ public class BVHManager extends BaseObject
         {
             renderer.object().Destroy();
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        return root != null ? root.toString() : "Empty Tree!";
     }
 }

@@ -11,7 +11,7 @@ out vec2 uvCoords;
 void main()
 {
     //Necessary calculations for 3D projection and correct worldspace position
-    gl_Position = ObjectToClipSpace(position);
+    gl_Position = ObjectToClipSpace(position) + 1.0;
 
     fragPosition = vec3(ObjectToWorldSpace(position));
 

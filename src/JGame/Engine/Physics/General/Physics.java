@@ -29,7 +29,6 @@ public class Physics
     {
         physicsTimer += Time.DeltaTime();
 
-        //Limit the physics timer to at most perform 6 updates per frame (loss of precision when under 10fps)
         physicsTimer = Math.min(physicsTimer, Settings.Physics.physicsUpdateInterval * 6);
 
         while (physicsTimer >= Settings.Physics.physicsUpdateInterval)
@@ -38,9 +37,6 @@ public class Physics
 
             UpdateForces();
 
-            InternalGameInstance.Instance._internalPhysicsUpdate();
-
-            // Run physics update on all objects
             for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
             {
                 if(baseObj != null && baseObj.IsAvailable())

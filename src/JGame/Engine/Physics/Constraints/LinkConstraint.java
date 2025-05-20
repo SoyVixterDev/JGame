@@ -2,7 +2,7 @@ package JGame.Engine.Physics.Constraints;
 
 import JGame.Engine.Basic.JComponent;
 import JGame.Engine.Physics.Bodies.Rigidbody;
-import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
 import JGame.Engine.Structures.Vector3D;
 
 /**

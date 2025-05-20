@@ -53,7 +53,7 @@ public class CameraMatrixUtilities
      */
     public static Matrix4x4 PerspectiveProjection(float fov, float aspect, float farPlane, float nearPlane)
     {
-        float tanFov = (float) Math.tan(Math.toRadians(fov/ 2.0f));
+        float tanFov = (float) Math.tan(Math.toRadians(fov * .5f));
         float top = nearPlane * tanFov;
         float right = top * aspect;
 

@@ -1,5 +1,7 @@
 package JGame.Engine.Structures;
 
+import JGame.Engine.Utilities.MathUtilities;
+
 import java.util.Objects;
 import java.util.Vector;
 
@@ -12,6 +14,14 @@ public class Quaternion
     public final float x;
     public final float y;
     public final float z;
+
+    public Quaternion(Quaternion quaternion)
+    {
+        this.w = quaternion.w;
+        this.x = quaternion.x;
+        this.y = quaternion.y;
+        this.z = quaternion.z;
+    }
 
     /**
      * Creates a Quaternion representing a rotation
@@ -66,6 +76,41 @@ public class Quaternion
     }
 
     /**
+     * Adds a vector to this quaternion, treating it like a rotation
+     * @param vector
+     * The Vector, rotation
+     * @return
+     * The result of the addition
+     */
+    public Quaternion Add(Vector3D vector)
+    {
+        return Add(this, vector);
+    }
+
+    /**
+     * Adds a vector to a quaternion, treating it like a rotation
+     * @param quaternion
+     * The quaternion
+     * @param vector
+     * The Vector, rotation
+     * @return
+     * The result of the addition
+     */
+    public static Quaternion Add(Quaternion quaternion, Vector3D vector)
+    {
+        Quaternion q = new Quaternion(0, vector.x, vector.y, vector.z);
+        q = q.Multiply(quaternion);
+
+        float w = quaternion.w + (q.w * 0.5f);
+        float x = quaternion.x + (q.x * 0.5f);
+        float y = quaternion.y + (q.y * 0.5f);
+        float z = quaternion.z + (q.z * 0.5f);
+
+        return new Quaternion(w, x, y, z).Normalized();
+    }
+
+
+    /**
      * Adds a scaled vector to this quaternion
      * @param vector
      * The vector representing the rotation
@@ -84,7 +129,7 @@ public class Quaternion
         float y = this.y + (q.y * 0.5f);
         float z = this.z + (q.z * 0.5f);
 
-        return new Quaternion(w, x, y, z);
+        return new Quaternion(w, x, y, z).Normalized();
     }
 
     /**
@@ -146,6 +191,11 @@ public class Quaternion
         float x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
         float y = a.w * b.y + a.y * b.w + a.z * b.x - a.x * b.z;
         float z = a.w * b.z + a.z * b.w + a.x * b.y - a.y * b.x;
+
+        if (Math.abs(w) < 1e-6) w = 0.0f;
+        if (Math.abs(x) < 1e-6) x = 0.0f;
+        if (Math.abs(y) < 1e-6) y = 0.0f;
+        if (Math.abs(z) < 1e-6) z = 0.0f;
 
         return new Quaternion(w, x, y, z);
     }
@@ -241,14 +291,55 @@ public class Quaternion
     //-------Other Functions------
 
     /**
-     * Returns a Quaternion representation of a Vector3D of euler angles
+     * Gets a quaternion from an axis and an angle
+     * @param axis
+     * The axis
+     * @param angle
+     * The angle
+     * @return
+     * The resulting quaternion
+     */
+    public static Quaternion FromAxisAngle(Vector3D axis, float angle)
+    {
+        Vector3D normalizedAxis = axis.Normalized();
+        float halfAngle = angle / 2.0f;
+        float sinHalfAngle = (float) Math.sin(halfAngle);
+        float cosHalfAngle = (float) Math.cos(halfAngle);
+
+        return new Quaternion(
+                cosHalfAngle,
+                normalizedAxis.x * sinHalfAngle,
+                normalizedAxis.y * sinHalfAngle,
+                normalizedAxis.z * sinHalfAngle
+        );
+    }
+
+    /**
+     * Returns a Quaternion representation of a Vector3D of euler angles in radians
      * @param eulerAngles
-     * The euler representation of the rotation
+     * The euler representation of the rotation in radians
      * @return
      * A Quaternion representation of the rotation
      */
     public static Quaternion EulerToQuaternion(Vector3D eulerAngles)
     {
+        return EulerToQuaternion(eulerAngles, false);
+    }
+
+    /**
+     * Returns a Quaternion representation of a Vector3D of euler angles
+     * @param eulerAngles
+     * The euler representation of the rotation
+     * @param inRadians
+     * Are the provided angles in radians?
+     * @return
+     * A Quaternion representation of the rotation
+     */
+    public static Quaternion EulerToQuaternion(Vector3D eulerAngles, boolean inRadians)
+    {
+        if(!inRadians)
+            eulerAngles = eulerAngles.Scale(MathUtilities.TO_RADIANS);
+
         float cr = (float)Math.cos(eulerAngles.x * 0.5f);
         float sr = (float)Math.sin(eulerAngles.x * 0.5f);
         float cp = (float)Math.cos(eulerAngles.y * 0.5f);
@@ -300,19 +391,28 @@ public class Quaternion
      */
     public Quaternion Inverse()
     {
-        float magnitudeSquared = MagnitudeSquared();
         Quaternion conjugate = Conjugate();
+        return conjugate.Normalized();
+    }
 
-        return new Quaternion(conjugate.w / magnitudeSquared, conjugate.x / magnitudeSquared,
-                conjugate.y / magnitudeSquared, conjugate.z / magnitudeSquared);
+    /**
+     * Returns a Vector3D containing the Euler representation of the quaternion, in degrees
+     * @return
+     * The Euler representation of the quaternion in degrees
+     */
+    public Vector3D EulerAngles()
+    {
+        return EulerAngles(false);
     }
 
     /**
      * Returns a Vector3D containing the Euler representation of the quaternion
+     * @param inRadians
+     * Return in radians?
      * @return
      * A Vector3D containing the Euler representation of the quaternion
      */
-    public Vector3D EulerAngles()
+    public Vector3D EulerAngles(boolean inRadians)
     {
         float sinr_cosp = 2 * (w * x + y * z);
         float cosr_cosp = 1 - 2 * (x * x + y * y);
@@ -329,7 +429,12 @@ public class Quaternion
         float cosy_cosp = 1 - 2 * (y * y + z * z);
         float yaw = (float) Math.atan2(siny_cosp, cosy_cosp);
 
-        return new Vector3D(roll, pitch, yaw);
+        Vector3D angles = new Vector3D(roll, pitch, yaw);
+
+        if(!inRadians)
+            angles = angles.Scale(MathUtilities.TO_DEGREES);
+
+        return angles;
     }
 
     /**
@@ -361,29 +466,6 @@ public class Quaternion
     }
 
     /**
-     * Linearly interpolates between 2 quaternions, by t
-     * @param a
-     * Quaternion A
-     * @param b
-     * Quaternion B
-     * @param t
-     * Parameter
-     * @return
-     * The linear interpolation result
-     */
-    public static Quaternion Lerp(Quaternion a, Quaternion b, float t)
-    {
-        if (a.DotProduct(b) < 0.0f)
-        {
-            b = b.Negate();
-        }
-
-        Quaternion result = a.Scale(1 - t).Add(b.Scale(t));
-
-        return result.Normalized();
-    }
-
-    /**
      * Returns the quaternion after being applied a rotation of angle radians around the axis
      * @param axis
      * The axis at which the rotation is applied
@@ -394,17 +476,7 @@ public class Quaternion
      */
     public Quaternion RotateAxis(Vector3D axis, float angle)
     {
-        Vector3D normalizedAxis = axis.Normalized();
-
-        float halfAngle = angle / 2.0f;
-        float sinHalfAngle = (float) Math.sin(halfAngle);
-
-        float qw = (float) Math.cos(halfAngle);
-        float qx = normalizedAxis.x * sinHalfAngle;
-        float qy = normalizedAxis.y * sinHalfAngle;
-        float qz = normalizedAxis.z * sinHalfAngle;
-
-        return Multiply(new Quaternion(qw, qx, qy, qz), this) ;
+        return Multiply(Quaternion.FromAxisAngle(axis, angle), this) ;
     }
 
     /**
@@ -432,8 +504,8 @@ public class Quaternion
     {
         float magnitudeSquared = MagnitudeSquared();
 
-        if(magnitudeSquared == 0)
-            return Identity;
+        if (magnitudeSquared < 1e-6 || Math.abs(magnitudeSquared - 1.0f) < 1e-6)
+            return this;
 
         float magnitude = (float) Math.sqrt(magnitudeSquared);
         return new Quaternion(this.w / magnitude, this.x / magnitude, this.y / magnitude, this.z / magnitude);
@@ -445,4 +517,10 @@ public class Quaternion
      * Quaternion with no rotation
      */
     public static final Quaternion Identity = new Quaternion(1.0f, 0.0f , 0.0f , 0.0f);
+
+    @Override
+    public String toString()
+    {
+        return "(" + w + ", " + x + ", " + y + ", " + z + ")";
+    }
 }

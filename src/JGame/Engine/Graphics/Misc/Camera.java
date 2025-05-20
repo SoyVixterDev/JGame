@@ -7,6 +7,8 @@ import JGame.Engine.EventSystem.Event;
 import JGame.Engine.Internal.Logger;
 import JGame.Engine.Graphics.Renderers.SkyboxRenderer;
 import JGame.Engine.Structures.Matrix4x4;
+import JGame.Engine.Structures.Vector2D;
+import JGame.Engine.Structures.Vector3D;
 import JGame.Engine.Utilities.CameraMatrixUtilities;
 
 /**
@@ -122,15 +124,13 @@ public class Camera extends JComponent
     @Override
     protected void OnEnable()
     {
-        object().transform().OnChangePosition.Subscribe(updateViewMatrix);
-        object().transform().OnChangeRotation.Subscribe(updateViewMatrix);
+        object().transform().OnChangeTransformation.Subscribe(updateViewMatrix);
     }
 
     @Override
     protected void OnDisable()
     {
-        object().transform().OnChangePosition.Unsubscribe(updateViewMatrix);
-        object().transform().OnChangeRotation.Unsubscribe(updateViewMatrix);
+        object().transform().OnChangeTransformation.Unsubscribe(updateViewMatrix);
     }
 
 
@@ -250,4 +250,48 @@ public class Camera extends JComponent
         return CameraMatrixUtilities.PerspectiveProjection(fov, Window.GetWindowAspectRatio(), farPlane, nearPlane);
     }
 
+    /**
+     * Converts from screen position to world space
+     * @param screenPos
+     * The screen position in screen space (pixels).
+     * @param depth
+     * Z component for the position in clip space.
+     * @return
+     * Position in world space.
+     */
+    public Vector3D ScreenToWorldPosition(Vector2D screenPos, float depth)
+    {
+        // Normalize screen position to [-1, 1]
+        screenPos = screenPos.Divide(Window.GetWindowSize()).Subtract(Vector2D.One.Scale(0.5f));
+
+        // Get matrices
+        Matrix4x4 projectionMatrix = GetProjectionMatrix();
+        Matrix4x4 viewMatrix = GetViewMatrix();
+        Matrix4x4 inverseProjection = projectionMatrix.Inverse();
+        Matrix4x4 inverseView = viewMatrix.Inverse();
+
+        // Clip space coordinates
+        float x = screenPos.x;
+        float y = screenPos.y;
+        float[] clipSpacePos = {x, y, depth, 1.0f};
+
+        // Convert to view space
+        float[] viewSpacePos = inverseProjection.Multiply(clipSpacePos);
+
+        // Homogeneous coordinate normalization
+        float w = viewSpacePos[3];
+        if (Math.abs(w) > 1e-6f) // Avoid division by near-zero
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                viewSpacePos[i] /= w;
+            }
+        }
+
+        // Convert to world space
+        float[] worldSpacePos = inverseView.Multiply(viewSpacePos);
+
+        // Return as Vector3D
+        return new Vector3D(worldSpacePos[0], worldSpacePos[1], worldSpacePos[2]);
+    }
 }

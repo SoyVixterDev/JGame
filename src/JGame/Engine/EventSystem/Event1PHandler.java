@@ -20,22 +20,15 @@ public class Event1PHandler<T>
     public void Invoke(T param)
     {
         List<Integer> nullListeners = new ArrayList<>();
-        int currentIndex = 0;
-        for(Event1P<T> listener : listeners)
+        for(Event1P<T> listener : new ArrayList<>(listeners))
         {
             if(listener != null)
                 listener.OnInvoke(param);
             else
             {
                 Logger.DebugWarning("Null listener found, deleting from list!");
-                nullListeners.add(currentIndex);
+                listeners.remove(listener);
             }
-            currentIndex++;
-        }
-
-        for(int index : nullListeners)
-        {
-            listeners.remove(index);
         }
     }
 

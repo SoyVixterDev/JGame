@@ -23,23 +23,15 @@ public class Event3PHandler<T1, T2, T3>
 
     public void Invoke(T1 param1, T2 param2, T3 param3)
     {
-        List<Integer> nullListeners = new ArrayList<>();
-        int currentIndex = 0;
-        for(Event3P<T1, T2, T3> listener : listeners)
+        for(Event3P<T1, T2, T3> listener : new ArrayList<>(listeners))
         {
             if(listener != null)
                 listener.OnInvoke(param1, param2, param3);
             else
             {
                 Logger.DebugWarning("Null listener found, deleting from list!");
-                nullListeners.add(currentIndex);
+                listeners.remove(listener);
             }
-            currentIndex++;
-        }
-
-        for(int index : nullListeners)
-        {
-            listeners.remove(index);
         }
     }
 

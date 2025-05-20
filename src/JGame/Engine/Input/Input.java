@@ -16,6 +16,7 @@ public class Input
     private static final GLFWScrollCallback scrollCallback;
 
     private static Vector2D mousePos = Vector2D.Zero;
+    private static Vector2D lastMousePos = Vector2D.Zero;
     private static Vector2D mouseScroll = Vector2D.Zero;
 
     private static final boolean[] keys = new boolean[GLFW.GLFW_KEY_LAST];
@@ -34,9 +35,18 @@ public class Input
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods)
             {
+                if(key == -1) return;
+
                 keys[key] = (action != GLFW.GLFW_RELEASE);
-                keysDown[key] = (action == GLFW.GLFW_PRESS);
-                keysUp[key] = (action == GLFW.GLFW_RELEASE);
+
+                if (action == GLFW.GLFW_PRESS)
+                {
+                    keysDown[key] = true;
+                }
+                else if (action == GLFW.GLFW_RELEASE)
+                {
+                    keysUp[key] = true;
+                }
             }
         };
 
@@ -45,6 +55,7 @@ public class Input
             @Override
             public void invoke(long window, double xpos, double ypos)
             {
+                lastMousePos = mousePos;
                 mousePos = new Vector2D((float) xpos, (float) ypos);
             }
         };
@@ -54,9 +65,17 @@ public class Input
             @Override
             public void invoke(long window, int button, int action, int mods)
             {
+                if(button == -1) return;
                 mouseButtons[button] = (action != GLFW.GLFW_RELEASE);
-                mouseButtonsDown[button] = (action == GLFW.GLFW_PRESS);
-                mouseButtonsUp[button] = (action == GLFW.GLFW_RELEASE);
+
+                if (action == GLFW.GLFW_PRESS)
+                {
+                    mouseButtonsDown[button] = true;
+                }
+                else if (action == GLFW.GLFW_RELEASE)
+                {
+                    mouseButtonsUp[button] = true;
+                }
             }
         };
 
@@ -88,12 +107,73 @@ public class Input
             GLFW.glfwSetCursorPosCallback(Window.GetWindow(), mousePositionCallback);
             GLFW.glfwSetKeyCallback(Window.GetWindow(), keyboardCallback);
             GLFW.glfwSetScrollCallback(Window.GetWindow(), scrollCallback);
+
+            InitializeMousePosition();
         }
         catch(NullPointerException e)
         {
             Logger.DebugWarning("There's no window created! Create an instance of Window, Input and other functions require a window!");
         }
 
+    }
+
+    /**
+     * Initializes mouse position
+     */
+    private static void InitializeMousePosition()
+    {
+        double[] xpos = new double[1];
+        double[] ypos = new double[1];
+
+        GLFW.glfwGetCursorPos(Window.GetWindow(), xpos, ypos);
+
+        mousePos = new Vector2D((float) xpos[0], (float) ypos[0]);
+        lastMousePos = mousePos;
+    }
+
+    /**
+     * Sets the mouse cursor position to the center of the window
+     */
+    public static void CenterMouse()
+    {
+        Vector2D center = Window.GetWindowSize().Scale(1.0f/2.0f);
+        SetMousePosition(center);
+    }
+
+    /**
+     * Sets the mouse position in window space
+     */
+    public static void SetMousePosition(Vector2D position)
+    {
+        long window = Window.GetWindow();
+        if (window != -1)
+        {
+            GLFW.glfwSetCursorPos(window, position.x, position.y);
+
+            mousePos = position;
+            lastMousePos = mousePos;
+        }
+    }
+
+
+    /**
+     * Called by the application to reset input states like key down or up or lastMousePos
+     */
+    public static void ResetInputStates()
+    {
+        for (int i = 0; i < mouseButtonsDown.length; i++)
+        {
+            mouseButtonsDown[i] = false;
+            mouseButtonsUp[i] = false;
+        }
+        for (int i = 0; i < keysDown.length; i++)
+        {
+            keysDown[i] = false;
+            keysUp[i] = false;
+        }
+
+        lastMousePos = mousePos;
+        mouseScroll = Vector2D.Zero;
     }
 
     /**
@@ -116,12 +196,7 @@ public class Input
      */
     public static boolean GetKeyDown(int key)
     {
-        boolean result = keysDown[key];
-        if (result)
-        {
-            keysDown[key] = false;
-        }
-        return result;
+        return keysDown[key];
     }
 
     /**
@@ -133,12 +208,7 @@ public class Input
      */
     public static boolean GetKeyUp(int key)
     {
-        boolean result = keysUp[key];
-        if (result)
-        {
-            keysUp[key] = false;
-        }
-        return result;
+        return keysUp[key];
     }
 
     /**
@@ -162,12 +232,7 @@ public class Input
      */
     public static boolean GetMouseButtonDown(int button)
     {
-        boolean result = mouseButtonsDown[button];
-        if (result)
-        {
-            mouseButtonsDown[button] = false;
-        }
-        return result;
+        return mouseButtonsDown[button];
     }
     /**
      * Returns true in the first frame where the mouse button was released
@@ -178,12 +243,7 @@ public class Input
      */
     public static boolean GetMouseButtonUp(int button)
     {
-        boolean result = mouseButtonsUp[button];
-        if (result)
-        {
-            mouseButtonsUp[button] = false;
-        }
-        return result;
+        return mouseButtonsUp[button];
     }
 
     /**
@@ -194,6 +254,27 @@ public class Input
     public static Vector2D GetMousePosition()
     {
         return mousePos;
+    }
+    /**
+     * Returns the normalized mouse position in screenspace (0.0, 0.0) top left to (1.0, 1.0) bottom right
+     * @return
+     * Vector containing the coordinates of the mouse's position
+     */
+    public static Vector2D GetMouseNormalizedPosition()
+    {
+        return mousePos.Divide(Window.GetWindowSize());
+    }
+
+
+    /**
+     * Gets the difference of the mouse's position between frames
+     * @return
+     * The difference of the mouse's position between frames
+     */
+    public static Vector2D GetMouseMovement()
+    {
+
+        return Vector2D.Subtract(mousePos, lastMousePos);
     }
 
     /**
@@ -241,6 +322,18 @@ public class Input
     public static GLFWScrollCallback GetMouseScrollCallback()
     {
         return scrollCallback;
+    }
+
+
+    public static void SetMouseVisibility(boolean visible)
+    {
+        if(Window.GetWindow() != -1)
+            GLFW.glfwSetInputMode(Window.GetWindow(), GLFW.GLFW_CURSOR, visible ? GLFW.GLFW_CURSOR_NORMAL : GLFW.GLFW_CURSOR_HIDDEN);
+    }
+    public static void SetMouseLock(boolean locked)
+    {
+        if(Window.GetWindow() != -1)
+            GLFW.glfwSetInputMode(Window.GetWindow(), GLFW.GLFW_CURSOR, locked ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
     }
 
     /**

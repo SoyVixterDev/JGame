@@ -27,7 +27,8 @@ public class Vector2D
     {
         if(!calculatedNormalized)
         {
-            if(Math.abs(magnitude - 1.0f) < 0.00001f || magnitude < 0.00001f)
+            float magnitude = Magnitude();
+            if(Math.abs(magnitude - 1.0f) < 1e-7 || magnitude < 1e-7)
             {
                 normalized = this;
             }
@@ -281,28 +282,6 @@ public class Vector2D
         return (float)Math.acos(DotProduct(a, b) / (a.magnitude * b.magnitude));
     }
 
-
-
-
-    /**
-     * Linearly interpolates from vector a to a vector b by t (0 to 1)
-     * @param a
-     * From
-     * @param b
-     * To
-     * @param t
-     * By
-     * @return
-     * The interpolated vector
-     */
-    public static Vector2D Lerp(Vector2D a, Vector2D b, float t)
-    {
-        return Vector2D.Add
-            (
-                    a.Scale(1.0f - t),
-                    b.Scale(t)
-            );
-    }
 
 
     /**

@@ -6,12 +6,11 @@ import JGame.Engine.Structures.Vector3D;
 public class WireplaneRenderer extends WireshapeRenderer
 {
     private Vector2D halfSize = Vector2D.One.Scale(0.5f);
-    private Vector3D centerOffset =  Vector3D.Zero;
+    private Vector3D centerOffset = Vector3D.Zero;
 
     @Override
     protected float[] GetVertices()
     {
-
         return new float[]
         {
                 // Bottom face

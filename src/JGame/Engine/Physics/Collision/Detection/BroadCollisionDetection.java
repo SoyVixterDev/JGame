@@ -2,7 +2,7 @@ package JGame.Engine.Physics.Collision.Detection;
 
 import JGame.Engine.Basic.BaseObject;
 import JGame.Engine.Physics.Collision.BoundingVolumeHierarchy.BVHManager;
-import JGame.Engine.Physics.Collision.Contacts.PotentialContact;
+import JGame.Engine.Physics.Collision.Contact.PotentialContact;
 
 import java.util.List;
 

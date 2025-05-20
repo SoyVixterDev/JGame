@@ -1,5 +1,7 @@
 package JGame.Application;
 
+import JGame.Engine.EventSystem.Event;
+import JGame.Engine.EventSystem.EventHandler;
 import JGame.Engine.Graphics.Misc.Camera;
 import JGame.Engine.Input.Input;
 import JGame.Engine.Internal.Logger;
@@ -10,6 +12,8 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.opengl.GL;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -25,7 +29,7 @@ public class Window
 
     static String title;
     static ColorRGBA backgroundColor = ColorRGBA.Black;
-    static long window;
+    static long window = -1;
 
     private static Vector2D currentWindowSize = new Vector2D(1280, 720);
     private static Vector2D defaultWindowSize = new Vector2D(1280, 720);
@@ -55,9 +59,10 @@ public class Window
 
             ResetViewport();
             Camera.CalculateProjectionMatrix();
+            OnChangeWindowSize.Invoke();
         }
     };
-
+    public static final EventHandler OnChangeWindowSize = new EventHandler();
 
     /**
      * Creates and Initializes the window for the game, in borderless fullscreen mode, call this function to have access to graphic output
@@ -94,7 +99,6 @@ public class Window
             window = 0;
             return;
         }
-
 
         Window.title = title;
 

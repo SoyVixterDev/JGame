@@ -1,10 +1,12 @@
 package JGame.Engine.Physics.Collision.Helper;
 
+import JGame.Engine.Internal.Logger;
 import JGame.Engine.Physics.Collision.Colliders.*;
-import JGame.Engine.Physics.Collision.Contacts.Contact;
+import JGame.Engine.Physics.Collision.Contact.Contact;
 import JGame.Engine.Structures.Vector2D;
 import JGame.Engine.Structures.Vector3D;
 import JGame.Engine.Utilities.MathUtilities;
+import org.lwjgl.system.windows.DISPLAY_DEVICE;
 
 import java.util.*;
 
@@ -70,7 +72,7 @@ public class CollisionHelper
      */
     public static Contact PointFaceContact(Collider collider, PlaneCollider plane, Vector3D T, Vector3D normal, float penetration)
     {
-        if(normal.DotProduct(T) > 0)
+        if(normal.DotProduct(T) > 1e-6)
             normal = normal.Negate();
 
         Vector2D vector2D = plane.GetScaledHalfSize();
@@ -90,22 +92,20 @@ public class CollisionHelper
      */
     public static Contact PointFaceContact(Collider collider, BoxCollider box, Vector3D T, Vector3D normal, float penetration)
     {
-        if(normal.DotProduct(T) > 0)
+        // Ensure normal direction is correct
+        if (normal.DotProduct(T) <  1e-6)
             normal = normal.Negate();
 
-        Vector3D vertex = box.GetScaledHalfSize();
+        Vector3D scaledHalfSize = box.GetScaledHalfSize();
+        Vector3D vertex = new Vector3D(
+                normal.DotProduct(box.transform().Right()) < 0 ? -scaledHalfSize.x : scaledHalfSize.x,
+                normal.DotProduct(box.transform().Up()) < 0 ? -scaledHalfSize.y : scaledHalfSize.y,
+                normal.DotProduct(box.transform().Forward()) < 0 ? -scaledHalfSize.z : scaledHalfSize.z
+        );
 
-        float vertexX = vertex.x;
-        float vertexY = vertex.y;
-        float vertexZ = vertex.z;
+        vertex = box.transform().LocalToWorldSpace(vertex);
 
-        if(box.transform().Right().DotProduct(normal) < 0) vertexX = -vertex.x;
-        if(box.transform().Up().DotProduct(normal) < 0) vertexY = -vertex.y;
-        if(box.transform().Forward().DotProduct(normal) < 0) vertexZ = -vertex.z;
-
-        vertex = new Vector3D(vertexX, vertexY, vertexZ);
-
-        return new Contact(collider.GetRigidbody(), box.GetRigidbody(), box.transform().LocalToWorldSpace(vertex), normal, penetration);
+        return new Contact(collider.GetRigidbody(), box.GetRigidbody(), vertex, normal, penetration);
     }
 
     /**
@@ -340,7 +340,7 @@ public class CollisionHelper
                 MathUtilities.Clamp(localSphereCenter.x, -boxScaledHalfSize.x, boxScaledHalfSize.x),
                 MathUtilities.Clamp(localSphereCenter.y, -boxScaledHalfSize.y, boxScaledHalfSize.y),
                 MathUtilities.Clamp(localSphereCenter.z, -boxScaledHalfSize.z, boxScaledHalfSize.z)
-        );
+        ).Multiply(box.transform().GetGlobalScale().Normalized());;
         closestPoint = box.transform().LocalToWorldSpace(closestPoint);
 
         float distanceSquared = Vector3D.DistanceSquared(closestPoint, sphereCenter);
@@ -666,8 +666,8 @@ public class CollisionHelper
         Vector3D T = boxA.GetCenterWorld().Subtract(boxB.GetCenterWorld());
 
         float minPen = Float.MAX_VALUE;
-        int minPenSingleAxisIdx = 0;
         int minPenAxisIdx = Integer.MAX_VALUE;
+        int minPenSingleAxisIdx = -1;
 
         for(int i = 0; i < candidateAxes.size(); i++)
         {
@@ -692,11 +692,13 @@ public class CollisionHelper
         if(minPenAxisIdx < 3)
         {
             Vector3D normal = boxA.transform().GetAxis(minPenAxisIdx);
+            //Logger.DebugLog("First Box Axis!");
             return PointFaceContact(boxA, boxB, T, normal, minPen);
         }
         else if(minPenAxisIdx < 6)
         {
             Vector3D normal = boxB.transform().GetAxis(minPenAxisIdx - 3);
+            //Logger.DebugLog("Second Box Axis!");
             return PointFaceContact(boxB, boxA, T.Negate(), normal, minPen);
         }
         else
@@ -709,7 +711,7 @@ public class CollisionHelper
             Vector3D axisB = boxB.transform().GetAxis(axisIndexB);
             Vector3D axis = axisA.CrossProduct(axisB).Normalized();
 
-            if(axis.DotProduct(T) > 0) axis = axis.Negate();
+            if(axis.DotProduct(T) < 1e-6) axis = axis.Negate();
 
             Vector3D halfSizeA = boxA.GetScaledHalfSize();
             Vector3D halfSizeB = boxB.GetScaledHalfSize();
@@ -739,6 +741,7 @@ public class CollisionHelper
                                               pointEdgeBVector, axisB, sizeB,
                                          minPenSingleAxisIdx > 2);
 
+            //Logger.DebugLog("Cross Product Axis!");
             return new Contact(boxA.GetRigidbody(), boxB.GetRigidbody(), vertex, axis, minPen);
         }
     }
@@ -944,15 +947,16 @@ public class CollisionHelper
     {
         Vector3D midLine = sphereA.GetCenterWorld().Subtract(sphereB.GetCenterWorld());
 
-        float size = midLine.Magnitude();
+        float distance = midLine.Magnitude();
         float addedRadii = (sphereA.GetScaledRadius() + sphereB.GetScaledRadius());
 
-        if(size <= addedRadii)
+        if(distance >= addedRadii)
             return null;
 
-        Vector3D contactNormal = midLine.Scale(1.0f/size);
+        Vector3D contactNormal = midLine.Scale(1.0f/distance);
         Vector3D contactPoint = sphereA.GetCenterWorld().Add(midLine.Scale(0.5f));
-        float penetration = addedRadii - size;
+
+        float penetration = addedRadii - distance;
 
         return new Contact(sphereA.GetRigidbody(), sphereB.GetRigidbody(), contactPoint, contactNormal, penetration);
     }
@@ -996,33 +1000,33 @@ public class CollisionHelper
     public static Contact GetContact(SphereCollider sphere, PlaneCollider plane)
     {
         Vector3D sphereCenter = sphere.GetCenterWorld();
-        Vector2D boxScaledHalfSize = plane.GetScaledHalfSize();
         float sphereRadius = sphere.GetScaledRadius();
 
+        Vector2D planeHalfSize = plane.GetScaledHalfSize();
         Vector3D localSphereCenter = plane.transform().WorldToLocalSpace(sphereCenter);
 
-        if (Math.abs(localSphereCenter.x) > boxScaledHalfSize.x + sphereRadius ||
-                Math.abs(localSphereCenter.z) > boxScaledHalfSize.y + sphereRadius)
+
+        if (Math.abs(localSphereCenter.x) > planeHalfSize.x + sphereRadius ||
+                Math.abs(localSphereCenter.z) > planeHalfSize.y + sphereRadius)
         {
             return null;
         }
 
         Vector3D closestPoint = new Vector3D(
-                MathUtilities.Clamp(localSphereCenter.x, -boxScaledHalfSize.x, boxScaledHalfSize.x),
+                MathUtilities.Clamp(localSphereCenter.x, -planeHalfSize.x, planeHalfSize.x),
                 0,
-                MathUtilities.Clamp(localSphereCenter.z, -boxScaledHalfSize.y, boxScaledHalfSize.y)
+                MathUtilities.Clamp(localSphereCenter.z, -planeHalfSize.y, planeHalfSize.y)
         );
 
         closestPoint = plane.transform().LocalToWorldSpace(closestPoint);
 
-        float distanceSquared = Vector3D.DistanceSquared(closestPoint, sphereCenter);
+        float distance = Vector3D.Distance(sphereCenter, closestPoint);
 
-        if(distanceSquared > sphereRadius * sphereRadius) return null;
+        if (distance > sphereRadius) return null;
 
-        Vector3D contactNormal = closestPoint.Subtract(sphereCenter).Normalized();
-        float penetration = sphereRadius - (float) Math.sqrt(distanceSquared);
+        float penetration = sphereRadius - distance;
 
-        return new Contact(plane.GetRigidbody(), sphere.GetRigidbody(), closestPoint, contactNormal, penetration);
+        return new Contact(plane.GetRigidbody(), sphere.GetRigidbody(), closestPoint, plane.GetNormal(), penetration);
     }
 
     /**

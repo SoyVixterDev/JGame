@@ -17,11 +17,14 @@ public class BoundingVolumeHelper
      */
     public static boolean Overlaps(BoundingBox box, BoundingSphere sphere)
     {
+        Vector3D minBox = box.Min();
+        Vector3D maxBox = box.Max();
+
         Vector3D closestPoint = new Vector3D
                 (
-                        Math.max(box.Min().x, Math.min(sphere.GetCenter().x, box.Max().x)),
-                        Math.max(box.Min().y, Math.min(sphere.GetCenter().y, box.Max().y)),
-                        Math.max(box.Min().z, Math.min(sphere.GetCenter().z, box.Max().z))
+                        Math.max(minBox.x, Math.min(sphere.GetCenter().x, maxBox.x)),
+                        Math.max(minBox.y, Math.min(sphere.GetCenter().y, maxBox.y)),
+                        Math.max(minBox.z, Math.min(sphere.GetCenter().z, maxBox.z))
                 );
 
         float distSquared = Vector3D.DistanceSquared(closestPoint, sphere.GetCenter());
@@ -56,6 +59,7 @@ public class BoundingVolumeHelper
     {
         Vector3D minA = boxA.Min();
         Vector3D maxA = boxA.Max();
+
         Vector3D minB = boxB.Min();
         Vector3D maxB = boxB.Max();
 

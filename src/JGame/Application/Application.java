@@ -1,8 +1,8 @@
 package JGame.Application;
 
 import JGame.Engine.Basic.BaseObject;
-import JGame.Engine.Internal.InternalGameInstance;
 import JGame.Engine.Basic.JGameObject;
+import JGame.Engine.Graphics.Renderers.RayTracingRenderer;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Graphics.Renderers.Renderer;
 import JGame.Engine.Input.Input;
@@ -11,7 +11,6 @@ import Project.JGameInstance;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  * The class used internally by the engine to start the game application, handles the main application loop.
@@ -21,6 +20,8 @@ public class Application
     public static int targetFramerate = 144;
 
     private static boolean running = true;
+
+    private static boolean useRayTracing = false;
 
     public Application()
     {
@@ -44,10 +45,16 @@ public class Application
 
             GLFW.glfwPollEvents();
 
+            if(Input.GetKeyDown(GLFW.GLFW_KEY_ESCAPE))
+                Input.SetMouseLock(false);
+
             EarlyUpdate();
-            Render();
+            Physics.UpdatePhysics();
             Update();
+            Render();
             LateUpdate();
+
+            Input.ResetInputStates();
 
             double elapsedTime = Time.Current() - startTime;
             double sleepTime = frameTime - elapsedTime;
@@ -68,7 +75,7 @@ public class Application
      * @param seconds
      * Seconds to sleep
      */
-    private void Sleep(double seconds)
+    public static void Sleep(double seconds)
     {
         long targetTime = System.nanoTime() + (long) (seconds * 1_000_000_000);
 
@@ -91,8 +98,6 @@ public class Application
      */
     private void EarlyUpdate()
     {
-        InternalGameInstance.Instance._internalEarlyUpdate();
-
         for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
@@ -108,9 +113,6 @@ public class Application
     private void Update()
     {
         Time.UpdateTime();
-        Physics.UpdatePhysics();
-
-        InternalGameInstance.Instance._internalUpdate();
 
         for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
         {
@@ -127,7 +129,6 @@ public class Application
      */
     private void LateUpdate()
     {
-        InternalGameInstance.Instance._internalLateUpdate();
         for(BaseObject baseObj : new ArrayList<>(BaseObject.allBaseObjects))
         {
             if(baseObj != null && baseObj.IsAvailable())
@@ -145,11 +146,45 @@ public class Application
         if(Window.window == 0)
             return;
 
-        Renderer.RenderOpaques();
-        Renderer.RenderTransparents();
+        if(useRayTracing)
+        {
+            RayTracingRenderer.RenderAll();
+        }
+        else
+        {
+            Renderer.RenderOpaques();
+            Renderer.RenderTransparents();
+        }
+
 
         Window.SwapBuffers();
 
     }
 
+    /**
+     * Sets the ray tracing state
+     * @param value
+     */
+    public static void SetRaytracing(boolean value)
+    {
+        if(value == useRayTracing)
+            return;
+
+        useRayTracing = value;
+
+        if(value)
+            RayTracingRenderer.InitializeRenderer();
+        else
+            RayTracingRenderer.CleanupRenderer();
+    }
+
+    /**
+     * Gets the current state of the ray tracing engine (enabled or disabled)
+     * @return
+     * The current state of the ray tracing engine (enabled or disabled)
+     */
+    public static boolean GetRaytracingState()
+    {
+        return useRayTracing;
+    }
 }
