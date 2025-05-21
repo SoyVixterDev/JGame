@@ -3,26 +3,38 @@
 const float PI = 3.1415926;
 const float INF = 1.0/0.0;
 
-const int MAX_BOUNCES = 4;
-const int RAYS_PER_PIXEL =  8;
+const int MAX_BOUNCES = 10;
+const int RAYS_PER_PIXEL = 16;
 const float EPSILON =  1e-4;
 
 struct Material
 {
-    vec3 color; //12 bytes
-    float transparency; //4 bytes
-    float smoothness; //4 bytes
-    float emissivity; //4 bytes
-    float _pad2; //4 bytes
-    float _pad3; //4 bytes
-}; //Total:32 bytes
+    vec3 color; // 12 bytes
+    float transparency; // 4 bytes
+    vec3 specularColor; // 12 bytes
+    float specularity; // 4 bytes
+    float smoothness; // 4 bytes
+    float emissivity; // 4 bytes
+    float _pad3; // 4 bytes
+    float _pad4; // 4 bytes
+}; //Total: 48 bytes
+
+struct Cube
+{
+    vec3 center; // 12 bytes
+    float _pad1; // 4 bytes
+    vec3 halfSize; // 12 bytes
+    float _pad2; // 4 bytes
+    vec4 rotation; // 16 bytes
+    Material material; // 48 bytes
+}; //Total: 96 bytes
 
 struct Sphere
 {
     vec3 position; //12 bytes
     float radius; //4 bytes
-    Material material; // 32 bytes;
-}; //Total: 48 bytes
+    Material material; // 48 bytes;
+}; //Total: 64 bytes
 
 struct Ray
 {
@@ -52,7 +64,12 @@ layout(std140, binding = 1) buffer SphereBuffer
     Sphere spheres[ ];
 };
 
-layout(std140, binding = 2) buffer DirectionalLightBuffer
+layout(std140, binding = 2) buffer CubeBuffer
+{
+    Cube cubes[ ];
+};
+
+layout(std140, binding = 3) buffer DirectionalLightBuffer
 {
     DirectionalLightData directionalLightData;
 };
@@ -69,7 +86,9 @@ uniform uint frame;
 uniform samplerCube skyboxTex;
 uniform float skyboxIntensity;
 
-in vec3 fragPosition;
+uniform float jitterStrength;
+uniform float dofStrength;
+
 in vec2 uvCoords;
 out vec4 outColor;
 
@@ -84,18 +103,16 @@ HitData RaySphere(Ray ray, Sphere sphere)
 
     vec3 offsetRayOrigin = ray.origin - sphereCenter;
 
-    float a = dot(ray.dir, ray.dir);
     float b = 2 * dot(offsetRayOrigin, ray.dir);
     float c = dot(offsetRayOrigin, offsetRayOrigin) - sphereRadius * sphereRadius;
 
-    float discriminant = b * b - 4 * a * c;
+    float discriminant = b * b - 4 * c;
 
     if(discriminant >= 0)
     {
         float sqrtDisc = sqrt(discriminant);
-        float t0 = (-b - sqrtDisc) / (2.0 * a);
-        float t1 = (-b + sqrtDisc) / (2.0 * a);
-
+        float t0 = (-b - sqrtDisc) / (2.0);
+        float t1 = (-b + sqrtDisc) / (2.0);
 
         float dst = t0;
 
@@ -172,6 +189,7 @@ float random_uniform( float x )
 }
 
 // Box-Muller approach to normal distribution, based on https://stackoverflow.com/a/6178290
+// Returns a single random value following normal distribution
 float random_normal( float n )
 {
     float u1 = random_uniform(n), u2 = random_uniform(n);
@@ -182,6 +200,8 @@ float random_normal( float n )
     return rho * cos(theta);
 }
 
+// Returns 2 random values following normal distribution,
+// this function exists because the Box-Muller approach can generate 2 values at a time using cosine and sine
 vec2 random_normal_vec(float n)
 {
     float u1 = random_uniform(n), u2 = random_uniform(n);
@@ -192,6 +212,7 @@ vec2 random_normal_vec(float n)
     return vec2(rho * cos(theta), rho * sin(theta));
 }
 
+// Returns a spherically uniform random direction using n as the current seed
 vec3 random_direction( float n )
 {
     vec2 random_dual = random_normal_vec(n);
@@ -202,16 +223,15 @@ vec3 random_direction( float n )
 
     return normalize(vec3(x, y, z));
 }
-
-// Thanks to: https://www.youtube.com/watch?v=Qz0KTGYJtUk&t=544s
-vec3 random_direction_hemisphere(vec3 normal, float n)
+// Generates a random point within a unit circle
+vec2 random_point_circle( float n )
 {
-    vec3 dir = random_direction(n);
-    dir *= sign(dot(normal, dir));
-
-    return dir;
+    float angle = random_uniform(n) * 2 * PI;
+    vec2 point = vec2(cos(angle), sin(angle));
+    return point * sqrt(random_uniform(n));
 }
 
+// Calculates ambient ilumination based on ray direction, it samples a skybox and uses the current main directional light as the sun
 vec3 GetAmbientLight(Ray ray)
 {
     vec3 sky = texture(skyboxTex, ray.dir).rgb * skyboxIntensity;
@@ -235,23 +255,31 @@ vec3 RayTracer(vec3 rayOrigin, vec3 rayDir, uint n)
         Ray ray;
         ray.origin = rayOrigin;
         ray.dir = rayDir;
+
         HitData hitInfo = CalculateRayCollision(ray);
+
+        Material material;
 
         if(hitInfo.didHit)
         {
             rayOrigin = hitInfo.hitPoint + hitInfo.normal * EPSILON;
-            rayDir = random_direction_hemisphere(hitInfo.normal, n + i);
+            vec3 diffuseDir = normalize(hitInfo.normal + random_direction(n + i));
+            vec3 specularDir = reflect(ray.dir, hitInfo.normal);
 
-            vec3 emittedLight = (hitInfo.material.color * hitInfo.material.emissivity);
-            float lightStrength = max(dot(hitInfo.normal, rayDir), 0.0);
+            material = hitInfo.material;
+
+            float specularBounce = step(random_uniform(n + i), material.specularity);
+
+            rayDir = mix(diffuseDir, specularDir, material.smoothness * specularBounce);
+
+            vec3 emittedLight = material.color * hitInfo.material.emissivity;
 
             lightColor += emittedLight * rayColor;
-            rayColor *= ((hitInfo.material.emissivity == 0.0) ? hitInfo.material.color : vec3(0.0, 0.0, 0.0)) * lightStrength;
+            rayColor *= mix(material.color, material.specularColor, specularBounce);
         }
         else
         {
             lightColor += GetAmbientLight(ray) * rayColor;
-
             break;
         }
     }
@@ -261,7 +289,9 @@ vec3 RayTracer(vec3 rayOrigin, vec3 rayDir, uint n)
 
 void main()
 {
-    vec2 normalizedUV = (uvCoords * 2 - 1.0);
+    //vec2 normalizedUV = vec2(0.5 - uvCoords.x, uvCoords.y - 0.5);
+    vec2 normalizedUV = uvCoords - 0.5;
+
     vec3 viewPointLocal = vec3(-normalizedUV.x, normalizedUV.y, 1.0) * CameraParams;
     vec3 viewPoint = vec3(CamTransformationMatrix * vec4(viewPointLocal, 1));
 
@@ -269,14 +299,24 @@ void main()
     uvec2 pixelCoord = uvec2(uvCoords * numPixels);
     uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
 
-    vec3 rayOrigin = CamWorldPos;
-    vec3 rayDir = normalize(viewPoint - rayOrigin);
+    vec3 camRight = CamTransformationMatrix[0].xyz;
+    vec3 camUp = CamTransformationMatrix[1].xyz;
 
     vec3 color = vec3(0);
 
+    uint randomState = pixelIndex * hash(frame);
+
     for(uint i = 0; i < RAYS_PER_PIXEL; i++)
     {
-        color += RayTracer(rayOrigin, rayDir, pixelIndex + frame * i);
+        vec2 defocusJitter = random_point_circle(randomState) * dofStrength / numPixels.x;
+        vec3 rayOrigin = CamWorldPos + camRight * defocusJitter.x + camUp * defocusJitter.y;
+
+        vec2 jitter = random_point_circle(randomState) * jitterStrength / numPixels.x;
+        vec3 jitteredViewPoint = viewPoint + camRight * jitter.x + camUp * jitter.y;
+
+        vec3 rayDir = normalize(jitteredViewPoint - rayOrigin);
+
+        color += RayTracer(rayOrigin, rayDir, randomState);
     }
 
     color = color / float(RAYS_PER_PIXEL);

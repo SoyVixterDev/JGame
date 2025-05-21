@@ -44,18 +44,19 @@ public class JGameInstance extends InternalGameInstance
 
             Camera.Main.object().AddComponent(EngineCameraController.class);
 
+            RayTracingRenderer.skyboxIntensity = 0.65f;
             sun = JGameObject.Create("Light").AddComponent(DirectionalLight.class);
-            sun.intensity = 5f;
-            sun.color = new ColorRGB(0.9608f   , 0.8275f, 0.5255f);
+            sun.intensity = 1f;
+            sun.color = new ColorRGB(0.9608f   , 0.9575f, 0.6255f);
 
-            sun.transform().RotateAxis(Vector3D.Up, -90);
             sun.transform().SetGlobalRotation(Quaternion.FromAxisAngle(Vector3D.Right, MathUtilities.TO_RADIANS * 150f));
+            sun.transform().RotateAxis(Vector3D.Up, -90);
 
-            CreateSphere(new Vector3D(-1.25f, 1, -3.25f), Vector3D.One.Scale(2), ColorRGBA.Red, 0.0f);
-            CreateSphere(new Vector3D(0, 1.25f, -1), Vector3D.One.Scale(2), ColorRGBA.Green, 0.0f);
-            CreateSphere(new Vector3D(1.25f, 1.25f, 1.25f), Vector3D.One.Scale(2), ColorRGBA.Blue, 0.0f);
+            CreateSphere(new Vector3D(-1.25f, 1, -3.25f), Vector3D.One.Scale(2), ColorRGBA.Red, 0.0f, 0.1f, 0.1f);
+            CreateSphere(new Vector3D(0, 1.25f, -1), Vector3D.One.Scale(2), ColorRGBA.Green, 0.0f, 0.1f, 0.1f);
+            CreateSphere(new Vector3D(1.25f, 1.25f, 1.25f), Vector3D.One.Scale(2), ColorRGBA.Blue, 0.0f, 0.1f, 0.1f);
 
-            CreateSphere(new Vector3D(0, -15, 0), Vector3D.One.Scale(31), ColorRGBA.White, 0.0f);
+            CreateSphere(new Vector3D(0, -15, 0), Vector3D.One.Scale(31), ColorRGBA.Gray);
         }
     };
 
@@ -74,13 +75,20 @@ public class JGameInstance extends InternalGameInstance
         spheresAndSun.StartScene();
     }
 
-    public JGameObject CreateSphere(Vector3D pos, Vector3D scale, ColorRGBA color, float emissivity)
+    public JGameObject CreateSphere(Vector3D pos, Vector3D scale, ColorRGBA color)
+    {
+        return CreateSphere(pos, scale, color, 0.0f, 0.0f, 0.0f);
+    }
+
+    public JGameObject CreateSphere(Vector3D pos, Vector3D scale, ColorRGBA color, float emissivity, float smoothness, float specularity)
     {
         JGameObject sphere = JGameObject.Create("Sphere", pos, Quaternion.Identity, scale);
 
         var sphereRayTraced = sphere.AddComponent(RayTracedSphereRenderer.class);
         sphereRayTraced.material.color = color;
         sphereRayTraced.material.emissivity = emissivity;
+        sphereRayTraced.material.smoothness = smoothness;
+        sphereRayTraced.material.specularity = specularity;
         var sphereMesh = sphere.AddComponent(MeshRenderer.class);
         sphereMesh.mesh = Mesh.Sphere();
         sphereMesh.material.SetTint(color);
@@ -90,25 +98,41 @@ public class JGameInstance extends InternalGameInstance
 
     float rotation = 150f;
     float rotationSpeed = 45f;
-
+    float sunStrength = 1.0f;
+    float sunStrengthChangeSpeed = 3.0f;
     @Override
     protected void Update()
     {
-        if(Input.GetKeyDown(GLFW.GLFW_KEY_E))
+        boolean resetAccumulation = false;
+
+        if(Input.GetKeyHold(GLFW.GLFW_KEY_E))
         {
-            rotation += rotationSpeed * (float)Time.DeltaTime();
-            sun.transform().SetGlobalRotation(Quaternion.FromAxisAngle(Vector3D.Right, MathUtilities.TO_RADIANS * rotation));
-            RayTracingRenderer.ResetAccumulation();
+            sun.transform().SetGlobalRotation(sun.transform().GetGlobalRotation().Multiply(Quaternion.FromAxisAngle(Vector3D.Right, MathUtilities.TO_RADIANS * -rotationSpeed * (float)Time.DeltaTime())));
+            resetAccumulation = true;
+        }
+        else if (Input.GetKeyHold(GLFW.GLFW_KEY_Q))
+        {
+            sun.transform().SetGlobalRotation(sun.transform().GetGlobalRotation().Multiply(Quaternion.FromAxisAngle(Vector3D.Right, MathUtilities.TO_RADIANS * rotationSpeed * (float)Time.DeltaTime())));
+            resetAccumulation = true;
+        }
+
+        if(Input.GetKeyHold(GLFW.GLFW_KEY_UP))
+        {
+            sunStrength += sunStrengthChangeSpeed * (float)Time.DeltaTime();
+            sun.intensity = sunStrength;
+            resetAccumulation = true;
+        }
+        else if(Input.GetKeyHold(GLFW.GLFW_KEY_DOWN))
+        {
+            sunStrength = Math.max(0.0f, sunStrength - sunStrengthChangeSpeed * (float)Time.DeltaTime());
+            sun.intensity = sunStrength;
+            resetAccumulation = true;
         }
 
         if(Input.GetKeyDown(GLFW.GLFW_KEY_TAB))
         {
             Application.SetRaytracing(!Application.GetRaytracingState());
-
-            if(Application.GetRaytracingState())
-                sun.intensity = 5.0f;
-            else
-                sun.intensity = 1.0f;
+            resetAccumulation = true;
         }
 
         if(Input.GetKeyDown(GLFW.GLFW_KEY_R))
@@ -120,6 +144,10 @@ public class JGameInstance extends InternalGameInstance
         {
             Application.Quit();
         }
+
+        if(resetAccumulation)
+            RayTracingRenderer.ResetAccumulation();
+
     }
 }
 

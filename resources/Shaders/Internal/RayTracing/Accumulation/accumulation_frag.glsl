@@ -9,9 +9,7 @@ uniform uint frame;
 
 void main()
 {
-    vec2 uv = vec2(uvCoords.x, 1.0 - uvCoords.y);
-
-    vec3 current = texture(currentRadiance, uv).rgb;
+    vec3 current = texture(currentRadiance, uvCoords).rgb;
 
     if(frame == 0u)
     {
@@ -19,7 +17,7 @@ void main()
     }
     else
     {
-        vec4 previous = texture(lastAccumTex, uv);
+        vec4 previous = texture(lastAccumTex, uvCoords);
 
         vec3 newSum = previous.rgb + current;
         float newCount = previous.a + 1.0;

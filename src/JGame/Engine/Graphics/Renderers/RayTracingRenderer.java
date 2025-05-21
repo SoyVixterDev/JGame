@@ -59,7 +59,7 @@ public abstract class RayTracingRenderer extends JComponent
         }
     };
 
-    protected static final Shader rayTracingShader = new Shader("/Shaders/Internal/RayTracing/Rendering/ray_tracing_render_vert.glsl", "/Shaders/Internal/RayTracing/Rendering/ray_tracing_render_frag.glsl");
+    protected static final Shader rayTracingShader = new Shader("/Shaders/Internal/Misc/fullscreen_vert.glsl", "/Shaders/Internal/RayTracing/Rendering/ray_tracing_render_frag.glsl");
     protected static final Shader accumShader = new Shader("/Shaders/Internal/Misc/fullscreen_vert.glsl", "/Shaders/Internal/RayTracing/Accumulation/accumulation_frag.glsl");
     protected static final Shader blitShader = new Shader("/Shaders/Internal/Misc/fullscreen_vert.glsl", "/Shaders/Internal/RayTracing/Blit/ray_tracing_blit_frag.glsl");
 
@@ -110,15 +110,15 @@ public abstract class RayTracingRenderer extends JComponent
     protected static final Mesh Quad = new Mesh(
         new Vertex[]
         {
-            new Vertex(new Vector3D(-1,-1,0), new Vector2D(0,0)),
-            new Vertex(new Vector3D(1,-1,0), new Vector2D(1,0)),
-            new Vertex(new Vector3D(1,1,0), new Vector2D(1,1)),
-            new Vertex(new Vector3D(-1,1,0), new Vector2D(0,1)),
+            new Vertex(new Vector3D(-1, -1, 0), new Vector2D(0, 1)),
+            new Vertex(new Vector3D( 1, -1, 0), new Vector2D(1, 1)),
+            new Vertex(new Vector3D( 1,  1, 0), new Vector2D(1, 0)),
+            new Vertex(new Vector3D(-1,  1, 0), new Vector2D(0, 0))
         },
         new Triangle[]
         {
             new Triangle(0, 1, 2),
-            new Triangle(0, 2, 3)
+            new Triangle(2, 3, 0)
         }
     );
 
@@ -144,22 +144,29 @@ public abstract class RayTracingRenderer extends JComponent
 
     private static void UpdateModelData()
     {
-        FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(allRayTracingRenderers.size() * 12);
+        FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(allRayTracingRenderers.size() * 16);
 
         for(RayTracingRenderer renderer : allRayTracingRenderers)
         {
             Vector3D position = renderer.transform().GetGlobalPosition();
             Vector3D scale = renderer.transform().GetGlobalScale();
             float largestScale = Math.max(Math.max(scale.x, scale.y), scale.z);
-            ColorRGBA color = ((RayTracedSphereRenderer)renderer).material.color;
 
-            floatBuffer.put(position.x).put(position.y).put(position.z);
-            floatBuffer.put(((RayTracedSphereRenderer)renderer).radius * largestScale);
-            floatBuffer.put(color.r).put(color.g).put(color.b).put(color.a);
-            floatBuffer.put(((RayTracedSphereRenderer)renderer).material.smoothness);
-            floatBuffer.put(((RayTracedSphereRenderer)renderer).material.emissivity);
-            floatBuffer.put(0.0f);
-            floatBuffer.put(0.0f);
+            if(renderer instanceof RayTracedSphereRenderer sphereRenderer)
+            {
+                ColorRGBA color = sphereRenderer.material.color;
+                ColorRGB specularColor = sphereRenderer.material.specularColor;
+
+                floatBuffer.put(position.x).put(position.y).put(position.z);
+                floatBuffer.put(sphereRenderer.radius * largestScale);
+                floatBuffer.put(color.r).put(color.g).put(color.b).put(color.a);
+                floatBuffer.put(specularColor.r).put(specularColor.g).put(specularColor.b);
+                floatBuffer.put(sphereRenderer.material.specularity);
+                floatBuffer.put(sphereRenderer.material.smoothness);
+                floatBuffer.put(sphereRenderer.material.emissivity);
+                floatBuffer.put(0.0f);
+                floatBuffer.put(0.0f);
+            }
         }
 
         floatBuffer.flip();
@@ -171,20 +178,25 @@ public abstract class RayTracingRenderer extends JComponent
         rayTracingShader.SetUniformProperty("sphereCount", allRayTracingRenderers.size(), true);
     }
 
-    static float focusDistance = 1;
+    public static float focusDistance = 1f;
+    public static float dofStrength = 0f;
+    public static float jitterStrength = 1.5f;
     /**
      * Updates the Camera parameters for the ray tracing shader
      */
     private static void UpdateCameraParams()
     {
-        float tanFov = (float) Math.tan(Math.toRadians(Camera.Main.GetFov()/2.0f));
-        float viewHeight = Camera.Main.GetNearPlane() * tanFov;
+        float tanFov = (float) Math.tan(Math.toRadians(Camera.Main.GetFov()));
+        float viewHeight = focusDistance * tanFov;
         float viewWidth = viewHeight * Window.GetWindowAspectRatio();
 
-        rayTracingShader.SetUniformProperty("CameraParams", new Vector3D(viewWidth, viewHeight, Camera.Main.GetNearPlane()), true);
+        rayTracingShader.SetUniformProperty("CameraParams", new Vector3D(viewWidth, viewHeight, focusDistance), true);
         rayTracingShader.SetUniformProperty("ScreenSize", Window.GetWindowSize(), true);
         rayTracingShader.SetUniformProperty("CamWorldPos", Camera.Main.transform().GetGlobalPosition(), true);
         rayTracingShader.SetUniformProperty("CamTransformationMatrix", Camera.Main.transform().GetTransformationMatrix(), true);
+
+        rayTracingShader.SetUniformProperty("dofStrength", dofStrength, true);
+        rayTracingShader.SetUniformProperty("jitterStrength", jitterStrength, true);
     }
 
     private static void SwapBuffers()
@@ -237,7 +249,7 @@ public abstract class RayTracingRenderer extends JComponent
 
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, dirLightBuffer);
         glBufferData(GL_SHADER_STORAGE_BUFFER, floatBuffer, GL_STATIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, dirLightBuffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, dirLightBuffer);
     }
 
     public static void RunAccumulation()
@@ -264,6 +276,14 @@ public abstract class RayTracingRenderer extends JComponent
         glBindVertexArray(0);
     }
 
+    public static float skyboxIntensity = 0.75f;
+
+    private static void UpdateOthers()
+    {
+        rayTracingShader.SetUniformProperty("frame", Time.Frame(), true);
+        rayTracingShader.SetUniformProperty("skyboxIntensity", skyboxIntensity, true);
+    }
+
     /**
      * Renders the scene using the ray tracing shader
      */
@@ -276,11 +296,8 @@ public abstract class RayTracingRenderer extends JComponent
 
         UpdateCameraParams();
         UpdateModelData();
-
-        rayTracingShader.SetUniformProperty("frame", Time.Frame(), true);
-        rayTracingShader.SetUniformProperty("skyboxIntensity", 0.75f, true);
-
         UpdateLightingData();
+        UpdateOthers();
 
         skyboxTexture.Bind(GL_TEXTURE0);
 

@@ -1,20 +1,15 @@
 package Project.Scripts.RayTracingTest;
 
-import JGame.Application.Window;
 import JGame.Engine.Basic.JComponent;
 import JGame.Engine.Basic.Transform;
 import JGame.Engine.Graphics.Misc.Camera;
-import JGame.Engine.Graphics.Misc.RayTracingMaterial;
 import JGame.Engine.Graphics.Renderers.RayTracingRenderer;
 import JGame.Engine.Input.Input;
-import JGame.Engine.Internal.Logger;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Structures.Quaternion;
 import JGame.Engine.Structures.Vector2D;
 import JGame.Engine.Structures.Vector3D;
 import org.lwjgl.glfw.GLFW;
-
-import java.awt.geom.RectangularShape;
 
 public class EngineCameraController extends JComponent
 {
@@ -23,14 +18,15 @@ public class EngineCameraController extends JComponent
     public float zoomSpeed = 0.5f;
     public float panSpeed = 0.01f;
 
+    public float focusDistanceChangeSpeed = 0.1f;
+    public float dofStrengthChangeSpeed = 10f;
+
     private boolean droneModeActive = false;
     private boolean panningModeActive = false;
 
     private boolean resetAccumulation = false;
 
     private Transform camTransform;
-    private Vector3D defaultPosition;
-    private Quaternion defaultRotation;
 
     private float yaw;
     private float pitch;
@@ -40,9 +36,6 @@ public class EngineCameraController extends JComponent
     {
         camTransform = Camera.Main.transform();
 
-        defaultPosition = camTransform.GetGlobalPosition();
-        defaultRotation = camTransform.GetGlobalRotation();
-
         Vector3D forward = camTransform.Forward();
         yaw = (float)Math.toDegrees(Math.atan2(forward.x, forward.z));
         pitch = (float)Math.toDegrees(Math.asin(forward.y));
@@ -51,8 +44,7 @@ public class EngineCameraController extends JComponent
     @Override
     protected void Update()
     {
-        HandleZoom();
-        HandleReset();
+        HandleScroll();
 
         if (Input.GetMouseButtonDown(GLFW.GLFW_MOUSE_BUTTON_LEFT))
         {
@@ -96,16 +88,29 @@ public class EngineCameraController extends JComponent
         }
     }
 
-    private void HandleZoom()
+
+    private void HandleScroll()
     {
         float scroll = Input.GetMouseScroll().y;
 
-        if (scroll != 0)
+        if(scroll == 0)
+            return;
+
+        if(Input.GetKeyHold(GLFW.GLFW_KEY_LEFT_ALT)) // Change focus distance
+        {
+            RayTracingRenderer.focusDistance = Math.max(0.5f, RayTracingRenderer.focusDistance + focusDistanceChangeSpeed * scroll);
+        }
+        else if(Input.GetKeyHold(GLFW.GLFW_KEY_LEFT_SHIFT)) // Change depth of field strength
+        {
+            RayTracingRenderer.dofStrength = Math.max(0.0f, RayTracingRenderer.dofStrength + dofStrengthChangeSpeed * scroll);
+        }
+        else // Zoom
         {
             Vector3D forward = camTransform.Forward();
             camTransform.SetGlobalPosition(camTransform.GetGlobalPosition().Add(forward.Scale(scroll * zoomSpeed)));
-            resetAccumulation = true;
         }
+
+        resetAccumulation = true;
     }
 
     private void HandleDroneRotation()
@@ -155,20 +160,5 @@ public class EngineCameraController extends JComponent
 
         Vector3D offset = camTransform.Right().Scale(delta.x * panSpeed).Add(camTransform.Up().Scale(delta.y * panSpeed));
         camTransform.SetGlobalPosition(camTransform.GetGlobalPosition().Add(offset));
-    }
-
-    private void HandleReset()
-    {
-        if (Input.GetKeyDown(GLFW.GLFW_KEY_G))
-        {
-            camTransform.SetGlobalPosition(defaultPosition);
-            camTransform.SetGlobalRotation(defaultRotation);
-
-            Vector3D forward = camTransform.Forward();
-            yaw = (float)Math.toDegrees(Math.atan2(forward.x, forward.z));
-            pitch = (float)Math.toDegrees(Math.asin(forward.y));
-
-            resetAccumulation = true;
-        }
     }
 }
