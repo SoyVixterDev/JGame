@@ -1,16 +1,17 @@
 #version 460
 
 const float PI = 3.1415926;
+const float TAU = 6.2831853;
 const float INF = 1.0/0.0;
 
-const int MAX_BOUNCES = 10;
+const int MAX_BOUNCES = 12;
 const int RAYS_PER_PIXEL = 16;
 const float EPSILON =  1e-4;
 
 struct Material
 {
     vec3 color; // 12 bytes
-    float transparency; // 4 bytes
+    float opacity; // 4 bytes
     vec3 specularColor; // 12 bytes
     float specularity; // 4 bytes
     float smoothness; // 4 bytes
@@ -19,7 +20,7 @@ struct Material
     float _pad4; // 4 bytes
 }; //Total: 48 bytes
 
-struct Cube
+struct Box
 {
     vec3 center; // 12 bytes
     float _pad1; // 4 bytes
@@ -64,9 +65,9 @@ layout(std140, binding = 1) buffer SphereBuffer
     Sphere spheres[ ];
 };
 
-layout(std140, binding = 2) buffer CubeBuffer
+layout(std140, binding = 2) buffer BoxBuffer
 {
-    Cube cubes[ ];
+    Box boxes[ ];
 };
 
 layout(std140, binding = 3) buffer DirectionalLightBuffer
@@ -75,6 +76,7 @@ layout(std140, binding = 3) buffer DirectionalLightBuffer
 };
 
 uniform int sphereCount;
+uniform int boxCount;
 
 uniform vec3 CameraParams;
 uniform vec2 ScreenSize;
@@ -91,6 +93,88 @@ uniform float dofStrength;
 
 in vec2 uvCoords;
 out vec4 outColor;
+
+mat3 QuaternionToMatrix(vec4 q)
+{
+    float x = q.x, y = q.y, z = q.z, w = q.w;
+
+    float xx = x * x, yy = y * y, zz = z * z;
+    float xy = x * y, xz = x * z, yz = y * z;
+    float wx = w * x, wy = w * y, wz = w * z;
+
+    return mat3(
+    1.0 - 2.0 * (yy + zz),  2.0 * (xy - wz),      2.0 * (xz + wy),
+    2.0 * (xy + wz),        1.0 - 2.0 * (xx + zz),2.0 * (yz - wx),
+    2.0 * (xz - wy),        2.0 * (yz + wx),      1.0 - 2.0 * (xx + yy)
+    );
+}
+
+HitData RayBox(Ray ray, Box box)
+{
+    HitData hit;
+    hit.didHit = false;
+
+    mat3 rot = QuaternionToMatrix(box.rotation);
+    mat3 invRot = transpose(rot);
+
+    vec3 localOrigin = invRot * (ray.origin - box.center);
+    vec3 localDir = invRot * ray.dir;
+
+    vec3 boxMin = -box.halfSize;
+    vec3 boxMax =  box.halfSize;
+
+    float tMin = 0.0;
+    float tMax = INF;
+
+    for(int i = 0; i < 3; i++)
+    {
+        float o = localOrigin[i];
+        float d = localDir[i];
+
+        if (abs(d) < 1e-6)
+        {
+            if (o < boxMin[i] || o > boxMax[i]) return hit;
+        }
+        else
+        {
+            float t1 = (boxMin[i] - o) / d;
+            float t2 = (boxMax[i] - o) / d;
+
+            if (t1 > t2)
+            {
+                float tmp = t1;
+                t1 = t2;
+                t2 = tmp;
+            }
+
+            tMin = max(tMin, t1);
+            tMax = min(tMax, t2);
+
+            if (tMin > tMax) return hit;
+        }
+    }
+
+    hit.didHit = true;
+    hit.dst = tMin;
+    hit.hitPoint = ray.origin + ray.dir * tMin;
+
+    vec3 hitLocal = localOrigin + localDir * tMin;
+    vec3 normalLocal = vec3(0.0);
+    float eps = 1e-4;
+
+    if (abs(hitLocal.x - boxMax.x) < eps) normalLocal = vec3(1, 0, 0);
+    else if (abs(hitLocal.x - boxMin.x) < eps) normalLocal = vec3(-1, 0, 0);
+    else if (abs(hitLocal.y - boxMax.y) < eps) normalLocal = vec3(0, 1, 0);
+    else if (abs(hitLocal.y - boxMin.y) < eps) normalLocal = vec3(0, -1, 0);
+    else if (abs(hitLocal.z - boxMax.z) < eps) normalLocal = vec3(0, 0, 1);
+    else if (abs(hitLocal.z - boxMin.z) < eps) normalLocal = vec3(0, 0, -1);
+
+    hit.normal = normalize(rot * normalLocal);
+    hit.material = box.material;
+
+    return hit;
+}
+
 
 // Calculates hit data between a ray and a sphere
 HitData RaySphere(Ray ray, Sphere sphere)
@@ -134,6 +218,7 @@ HitData RaySphere(Ray ray, Sphere sphere)
     return hit;
 }
 
+
 // Checks if a ray collides with any of the objects in memory
 HitData CalculateRayCollision(Ray ray)
 {
@@ -141,6 +226,7 @@ HitData CalculateRayCollision(Ray ray)
     closestHit.didHit = false;
     closestHit.dst = INF;
 
+    // Sphere interactions
     for(int i = 0; i < sphereCount; i++)
     {
         HitData hit = RaySphere(ray, spheres[i]);
@@ -150,6 +236,18 @@ HitData CalculateRayCollision(Ray ray)
             closestHit = hit;
         }
     }
+
+    // Box intersections
+    for(int i = 0; i < boxCount; i++)
+    {
+        HitData hit = RayBox(ray, boxes[i]);
+
+        if(hit.didHit && hit.dst < closestHit.dst)
+        {
+            closestHit = hit;
+        }
+    }
+
 
     return closestHit;
 }
@@ -194,7 +292,7 @@ float random_normal( float n )
 {
     float u1 = random_uniform(n), u2 = random_uniform(n);
 
-    float theta = 2 * PI * u1;
+    float theta = TAU * u1;
     float rho = sqrt(-2 * log(u2));
 
     return rho * cos(theta);
@@ -206,7 +304,7 @@ vec2 random_normal_vec(float n)
 {
     float u1 = random_uniform(n), u2 = random_uniform(n);
 
-    float theta = 2 * PI * u1;
+    float theta = TAU * u1;
     float rho = sqrt(-2 * log(u2));
 
     return vec2(rho * cos(theta), rho * sin(theta));
@@ -226,7 +324,7 @@ vec3 random_direction( float n )
 // Generates a random point within a unit circle
 vec2 random_point_circle( float n )
 {
-    float angle = random_uniform(n) * 2 * PI;
+    float angle = random_uniform(n) * TAU;
     vec2 point = vec2(cos(angle), sin(angle));
     return point * sqrt(random_uniform(n));
 }
@@ -263,19 +361,28 @@ vec3 RayTracer(vec3 rayOrigin, vec3 rayDir, uint n)
         if(hitInfo.didHit)
         {
             rayOrigin = hitInfo.hitPoint + hitInfo.normal * EPSILON;
-            vec3 diffuseDir = normalize(hitInfo.normal + random_direction(n + i));
+            vec3 diffuseDir = normalize(hitInfo.normal + random_direction(n));
             vec3 specularDir = reflect(ray.dir, hitInfo.normal);
 
             material = hitInfo.material;
 
-            float specularBounce = step(random_uniform(n + i), material.specularity);
+            float specularBounce = step(random_uniform(n), material.specularity);
 
             rayDir = mix(diffuseDir, specularDir, material.smoothness * specularBounce);
 
             vec3 emittedLight = material.color * hitInfo.material.emissivity;
 
             lightColor += emittedLight * rayColor;
-            rayColor *= mix(material.color, material.specularColor, specularBounce);
+
+            vec3 surfaceColor = mix(material.color, material.specularColor, specularBounce);
+            rayColor *= surfaceColor;
+
+            // Russian Roulette
+            float maxColor = max(rayColor.r, max(rayColor.g, rayColor.b));
+            if(random_uniform(n) >= maxColor)
+                break;
+
+            rayColor *= 1.0 / maxColor;
         }
         else
         {
@@ -289,7 +396,6 @@ vec3 RayTracer(vec3 rayOrigin, vec3 rayDir, uint n)
 
 void main()
 {
-    //vec2 normalizedUV = vec2(0.5 - uvCoords.x, uvCoords.y - 0.5);
     vec2 normalizedUV = uvCoords - 0.5;
 
     vec3 viewPointLocal = vec3(-normalizedUV.x, normalizedUV.y, 1.0) * CameraParams;

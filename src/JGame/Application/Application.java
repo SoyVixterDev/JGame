@@ -2,7 +2,7 @@ package JGame.Application;
 
 import JGame.Engine.Basic.BaseObject;
 import JGame.Engine.Basic.JGameObject;
-import JGame.Engine.Graphics.Renderers.RayTracingRenderer;
+import JGame.Engine.Graphics.Renderers.RayTracing.RayTracingRenderer;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Graphics.Renderers.Renderer;
 import JGame.Engine.Input.Input;

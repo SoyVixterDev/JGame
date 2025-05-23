@@ -1,10 +1,11 @@
-package JGame.Engine.Graphics.Renderers;
+package JGame.Engine.Graphics.Renderers.RayTracing;
 
 import JGame.Application.Window;
 import JGame.Engine.Basic.JComponent;
 import JGame.Engine.EventSystem.Event;
 import JGame.Engine.Graphics.Lighting.DirectionalLight;
 import JGame.Engine.Graphics.Misc.Camera;
+import JGame.Engine.Graphics.Misc.RayTracingMaterial;
 import JGame.Engine.Graphics.Misc.Shader;
 import JGame.Engine.Graphics.Models.Mesh;
 import JGame.Engine.Graphics.Models.Triangle;
@@ -13,14 +14,11 @@ import JGame.Engine.Graphics.Textures.BaseTexture;
 import JGame.Engine.Graphics.Textures.CubemapTexture;
 import JGame.Engine.Graphics.Textures.FrameBufferTexture;
 import JGame.Engine.Internal.Time;
-import JGame.Engine.Structures.ColorRGB;
-import JGame.Engine.Structures.ColorRGBA;
-import JGame.Engine.Structures.Vector2D;
-import JGame.Engine.Structures.Vector3D;
+import JGame.Engine.Structures.*;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
+
 import static org.lwjgl.opengl.GL46.*;
 
 /**
@@ -28,7 +26,7 @@ import static org.lwjgl.opengl.GL46.*;
  */
 public abstract class RayTracingRenderer extends JComponent
 {
-    public static final ArrayList<RayTracingRenderer> allRayTracingRenderers = new ArrayList<>();
+    public RayTracingMaterial material = RayTracingMaterial.Default();
 
     private static FrameBufferTexture currentFrame;
     private static FrameBufferTexture currentRadiance;
@@ -90,23 +88,6 @@ public abstract class RayTracingRenderer extends JComponent
         ResetAccumulation();
     }
 
-
-    @Override
-    protected void Initialize()
-    {
-        allRayTracingRenderers.add(this);
-    }
-
-    /**
-     * Used to delete the renderer from the renderers list for the pipeline,
-     * if you want to override the function add super.Destroy() last!
-     */
-    @Override
-    protected void OnDestroy()
-    {
-        allRayTracingRenderers.remove(this);
-    }
-
     protected static final Mesh Quad = new Mesh(
         new Vertex[]
         {
@@ -139,46 +120,79 @@ public abstract class RayTracingRenderer extends JComponent
         glDisableVertexAttribArray(2);
     }
 
-    private static final int modelBuffer = glGenBuffers();
+    private static final int spheresBuffer = glGenBuffers();
+    private static final int boxesBuffer = glGenBuffers();
     private static final int dirLightBuffer = glGenBuffers();
 
-    private static void UpdateModelData()
+    private static void PutMaterial(FloatBuffer floatBuffer, RayTracingMaterial material)
     {
-        FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(allRayTracingRenderers.size() * 16);
+        var color = material.color;
+        var specularColor = material.specularColor;
 
-        for(RayTracingRenderer renderer : allRayTracingRenderers)
+        floatBuffer.put(color.r).put(color.g).put(color.b).put(color.a);
+        floatBuffer.put(specularColor.r).put(specularColor.g).put(specularColor.b);
+        floatBuffer.put(material.specularity);
+        floatBuffer.put(material.smoothness);
+        floatBuffer.put(material.emissivity);
+        floatBuffer.put(0.0f);
+        floatBuffer.put(0.0f);
+    }
+
+    private static void UpdateCubeData()
+    {
+        FloatBuffer floatBuffer = BufferUtils.createFloatBuffer( RayTracedBoxRenderer.allRayTracedBoxes.size() * 24);
+
+        for(RayTracedBoxRenderer boxRenderer : RayTracedBoxRenderer.allRayTracedBoxes)
         {
-            Vector3D position = renderer.transform().GetGlobalPosition();
-            Vector3D scale = renderer.transform().GetGlobalScale();
-            float largestScale = Math.max(Math.max(scale.x, scale.y), scale.z);
+            Vector3D position = boxRenderer.transform().GetGlobalPosition();
+            Vector3D scaledSize = boxRenderer.halfSize.Multiply(boxRenderer.transform().GetGlobalScale());
+            Quaternion rotation = boxRenderer.transform().GetGlobalRotation();
 
-            if(renderer instanceof RayTracedSphereRenderer sphereRenderer)
-            {
-                ColorRGBA color = sphereRenderer.material.color;
-                ColorRGB specularColor = sphereRenderer.material.specularColor;
+            floatBuffer.put(position.x).put(position.y).put(position.z);
+            floatBuffer.put(0.0f);
+            floatBuffer.put(scaledSize.x).put(scaledSize.y).put(scaledSize.z);
+            floatBuffer.put(0.0f);
+            floatBuffer.put(rotation.x).put(rotation.y).put(rotation.z).put(rotation.w);
 
-                floatBuffer.put(position.x).put(position.y).put(position.z);
-                floatBuffer.put(sphereRenderer.radius * largestScale);
-                floatBuffer.put(color.r).put(color.g).put(color.b).put(color.a);
-                floatBuffer.put(specularColor.r).put(specularColor.g).put(specularColor.b);
-                floatBuffer.put(sphereRenderer.material.specularity);
-                floatBuffer.put(sphereRenderer.material.smoothness);
-                floatBuffer.put(sphereRenderer.material.emissivity);
-                floatBuffer.put(0.0f);
-                floatBuffer.put(0.0f);
-            }
+            PutMaterial(floatBuffer, boxRenderer.material);
         }
 
         floatBuffer.flip();
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, modelBuffer);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, boxesBuffer);
         glBufferData(GL_SHADER_STORAGE_BUFFER, floatBuffer, GL_STATIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, modelBuffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, boxesBuffer);
 
-        rayTracingShader.SetUniformProperty("sphereCount", allRayTracingRenderers.size(), true);
+        rayTracingShader.SetUniformProperty("boxCount", RayTracedBoxRenderer.allRayTracedBoxes.size(), true);
     }
 
-    public static float focusDistance = 1f;
+
+    private static void UpdateSphereData()
+    {
+        FloatBuffer floatBuffer = BufferUtils.createFloatBuffer( RayTracedSphereRenderer.allRayTracedSpheres.size() * 16);
+
+        for(RayTracedSphereRenderer sphereRenderer : RayTracedSphereRenderer.allRayTracedSpheres)
+        {
+            Vector3D position = sphereRenderer.transform().GetGlobalPosition();
+            Vector3D scale = sphereRenderer.transform().GetGlobalScale();
+            float largestScale = Math.max(Math.max(scale.x, scale.y), scale.z);
+
+            floatBuffer.put(position.x).put(position.y).put(position.z);
+            floatBuffer.put(sphereRenderer.radius * largestScale);
+
+            PutMaterial(floatBuffer, sphereRenderer.material);
+        }
+
+        floatBuffer.flip();
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, spheresBuffer);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, floatBuffer, GL_STATIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, spheresBuffer);
+
+        rayTracingShader.SetUniformProperty("sphereCount", RayTracedSphereRenderer.allRayTracedSpheres.size(), true);
+    }
+
+    public static float focusDistance = 2f;
     public static float dofStrength = 0f;
     public static float jitterStrength = 1.5f;
     /**
@@ -186,8 +200,8 @@ public abstract class RayTracingRenderer extends JComponent
      */
     private static void UpdateCameraParams()
     {
-        float tanFov = (float) Math.tan(Math.toRadians(Camera.Main.GetFov()));
-        float viewHeight = focusDistance * tanFov;
+        float tanFov = (float) Math.tan(Math.toRadians(Camera.Main.GetFov() / 2.0f));
+        float viewHeight = focusDistance * tanFov * 2.0f;
         float viewWidth = viewHeight * Window.GetWindowAspectRatio();
 
         rayTracingShader.SetUniformProperty("CameraParams", new Vector3D(viewWidth, viewHeight, focusDistance), true);
@@ -232,16 +246,21 @@ public abstract class RayTracingRenderer extends JComponent
             directionalLight = FindComponent(DirectionalLight.class);
         }
 
-        if(directionalLight == null)
-            return;
+        Vector3D forward = Vector3D.Zero;
+        ColorRGB color = ColorRGB.Black;
+        float intensity = 0.0f;
+
+        if(directionalLight != null)
+        {
+            forward = directionalLight.transform().Forward();
+            color = directionalLight.color;
+            intensity = directionalLight.intensity;
+        }
 
         FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(32);
 
-        Vector3D forward = directionalLight.transform().Forward();
-        ColorRGB color = directionalLight.color;
-
         floatBuffer.put(forward.x).put(forward.y).put(forward.z);
-        floatBuffer.put(directionalLight.intensity * 10f);
+        floatBuffer.put(intensity * 10f);
         floatBuffer.put(color.r).put(color.g).put(color.b);
         floatBuffer.put(50.0f);
 
@@ -295,7 +314,8 @@ public abstract class RayTracingRenderer extends JComponent
         rayTracingShader.Bind();
 
         UpdateCameraParams();
-        UpdateModelData();
+        UpdateSphereData();
+        UpdateCubeData();
         UpdateLightingData();
         UpdateOthers();
 

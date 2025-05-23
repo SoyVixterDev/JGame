@@ -3,7 +3,7 @@ package Project.Scripts.RayTracingTest;
 import JGame.Engine.Basic.JComponent;
 import JGame.Engine.Basic.Transform;
 import JGame.Engine.Graphics.Misc.Camera;
-import JGame.Engine.Graphics.Renderers.RayTracingRenderer;
+import JGame.Engine.Graphics.Renderers.RayTracing.RayTracingRenderer;
 import JGame.Engine.Input.Input;
 import JGame.Engine.Internal.Time;
 import JGame.Engine.Structures.Quaternion;
